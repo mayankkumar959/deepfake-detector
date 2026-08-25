@@ -82,7 +82,7 @@ export default function Landing() {
       <section className="bg-hero-glow relative overflow-hidden">
         <div className="bg-grid absolute inset-0" />
         <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-24 text-center lg:px-8 lg:pt-32">
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-fortexa-primary/30 bg-fortexa-primary/10 px-4 py-1.5 text-xs font-medium text-indigo-300">
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-fortexa-primary/30 bg-fortexa-primary/10 px-4 py-1.5 text-xs font-medium text-emerald-300">
             <Sparkles size={14} />
             AI-Powered Media Forensics Platform
           </div>
