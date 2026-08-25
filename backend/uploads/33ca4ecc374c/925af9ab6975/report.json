@@ -1,0 +1,71 @@
+{
+  "verdict": "fake",
+  "risk_level": "high",
+  "risk_label": "Critical",
+  "fake_probability": 0.8169,
+  "real_probability": 0.1831,
+  "confidence": 0.8169,
+  "method": "ml-ensemble",
+  "model_used": "resnet18",
+  "media_type": "image",
+  "filename": "fake_test.jpg",
+  "signals": [
+    {
+      "key": "ela",
+      "label": "Error Level Analysis",
+      "description": "Detects re-compression / tampering artifacts via JPEG error-level analysis.",
+      "score": 0.2864,
+      "status": "normal",
+      "weight": 0.25
+    },
+    {
+      "key": "frequency",
+      "label": "Frequency Spectrum",
+      "description": "Analyzes DCT high-frequency energy distribution for GAN smoothing artifacts.",
+      "score": 1.0,
+      "status": "suspicious",
+      "weight": 0.15
+    },
+    {
+      "key": "noise",
+      "label": "Noise Inconsistency",
+      "description": "Compares sensor-noise statistics between face and background regions.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.2
+    },
+    {
+      "key": "boundary",
+      "label": "Blending Seams",
+      "description": "Detects edge artifacts / hard splice boundaries around the face region.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.2
+    },
+    {
+      "key": "color",
+      "label": "Illumination Mismatch",
+      "description": "Checks color and lighting statistics between face and scene.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.12
+    },
+    {
+      "key": "metadata",
+      "label": "Metadata Fingerprint",
+      "description": "Signals editing-software traces in file metadata / naming.",
+      "score": 0.0,
+      "status": "normal",
+      "weight": 0.1
+    }
+  ],
+  "summary": "High-confidence indication of manipulated media. Multiple forensic signals point to synthetic generation or tampering (81% fake probability).",
+  "analyzed_at": "2026-08-25T16:17:14.506329+00:00",
+  "frame_count": null,
+  "duration_seconds": null,
+  "analyzed_frames": null,
+  "face_count": 0,
+  "timeline": null,
+  "heuristic_probability": 0.4816,
+  "ml_probability": 0.9974737763404846
+}

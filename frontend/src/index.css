@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-fortexa-bg text-fortexa-text;
+  }
+  ::selection {
+    @apply bg-fortexa-primary/40 text-white;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-fortexa-card/60 backdrop-blur-xl border border-white/10;
+  }
+  .glass-hover {
+    @apply transition-all duration-200 hover:border-white/20 hover:bg-fortexa-card/80;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fortexa-primary to-fortexa-secondary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fortexa-primary/25 transition-all hover:opacity-90 hover:shadow-fortexa-primary/40 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-fortexa-text transition-all hover:bg-white/10 hover:border-white/20 disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-fortexa-danger/90 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-fortexa-danger disabled:opacity-50;
+  }
+  .input-base {
+    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-fortexa-text placeholder-fortexa-muted/60 outline-none transition-all focus:border-fortexa-primary/60 focus:bg-white/10 focus:ring-2 focus:ring-fortexa-primary/20;
+  }
+  .card {
+    @apply rounded-2xl border border-white/10 bg-fortexa-card/70 p-6;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-fortexa-primary via-teal-300 to-fortexa-secondary bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(143, 166, 155, 0.3);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(143, 166, 155, 0.5);
+  }
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-hero-glow {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(16, 185, 129, 0.22), transparent),
+    radial-gradient(ellipse 40% 40% at 80% 10%, rgba(163, 230, 53, 0.12), transparent);
+}

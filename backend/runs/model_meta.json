@@ -1,0 +1,11 @@
+{
+  "arch": "resnet18",
+  "input_size": 224,
+  "val_acc": 0.9958,
+  "train_samples": 1360,
+  "val_samples": 240,
+  "epochs": 6,
+  "batch_size": 32,
+  "lr": 0.0001,
+  "trained_at": "2026-08-25T16:14:23.938458+00:00"
+}

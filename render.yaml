@@ -1,0 +1,25 @@
+# Render Blueprint — deploy with "New +" → "Blueprint" after pushing to GitHub
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: fortexa-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      # Set this to your live frontend URL (e.g. https://fortexa.vercel.app)
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+    # NOTE: Free plan has no persistent disk — DB/uploads reset on redeploy.
+    # Upgrade to Starter ($7/mo) and uncomment below for persistence:
+    # disk:
+    #   name: fortexa-data
+    #   mountPath: /app/data
+    #   sizeGB: 1

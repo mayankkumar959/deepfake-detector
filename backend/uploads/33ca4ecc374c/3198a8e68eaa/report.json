@@ -1,0 +1,71 @@
+{
+  "verdict": "inconclusive",
+  "risk_level": "medium",
+  "risk_label": "Caution",
+  "fake_probability": 0.4308,
+  "real_probability": 0.5692,
+  "confidence": 0.5692,
+  "method": "forensic-heuristic",
+  "model_used": "heuristic-forensic-v1",
+  "media_type": "image",
+  "filename": "test.png",
+  "signals": [
+    {
+      "key": "ela",
+      "label": "Error Level Analysis",
+      "description": "Detects re-compression / tampering artifacts via JPEG error-level analysis.",
+      "score": 0.0833,
+      "status": "normal",
+      "weight": 0.25
+    },
+    {
+      "key": "frequency",
+      "label": "Frequency Spectrum",
+      "description": "Analyzes DCT high-frequency energy distribution for GAN smoothing artifacts.",
+      "score": 1.0,
+      "status": "suspicious",
+      "weight": 0.15
+    },
+    {
+      "key": "noise",
+      "label": "Noise Inconsistency",
+      "description": "Compares sensor-noise statistics between face and background regions.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.2
+    },
+    {
+      "key": "boundary",
+      "label": "Blending Seams",
+      "description": "Detects edge artifacts / hard splice boundaries around the face region.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.2
+    },
+    {
+      "key": "color",
+      "label": "Illumination Mismatch",
+      "description": "Checks color and lighting statistics between face and scene.",
+      "score": 0.5,
+      "status": "neutral",
+      "weight": 0.12
+    },
+    {
+      "key": "metadata",
+      "label": "Metadata Fingerprint",
+      "description": "Signals editing-software traces in file metadata / naming.",
+      "score": 0.0,
+      "status": "normal",
+      "weight": 0.1
+    }
+  ],
+  "summary": "Results are inconclusive. Signals do not strongly favor either class (43% fake). Review the signal breakdown for details.",
+  "analyzed_at": "2026-08-25T15:22:16.119199+00:00",
+  "frame_count": null,
+  "duration_seconds": null,
+  "analyzed_frames": null,
+  "face_count": 0,
+  "timeline": null,
+  "heuristic_probability": 0.4308,
+  "ml_probability": null
+}
