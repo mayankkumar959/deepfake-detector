@@ -1,0 +1,31 @@
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# Databases & uploads
+*.db
+*.sqlite3
+backend/fortexa.db
+backend/uploads/
+backend/runs/*.db
+
+# Training data (large) — model artifact (runs/model.pth) KEEP in git
+data/source_faces/
+data/demo_dataset/
+
+# OS junk
+.DS_Store
+Thumbs.db
