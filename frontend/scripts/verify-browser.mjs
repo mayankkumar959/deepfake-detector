@@ -8,12 +8,14 @@ import assert from 'node:assert/strict'
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const navigationOnly = process.argv.includes('--navigation-only')
 const pollingOnly = process.argv.includes('--polling-only')
+const baseUrl = (process.argv.find(arg => arg.startsWith('--base-url='))?.slice('--base-url='.length) || 'http://localhost:5173').replace(/\/$/, '')
+assert.ok(['localhost', '127.0.0.1'].includes(new URL(baseUrl).hostname), 'Browser regression target must be local')
 const fixture = join(project, 'backend', '.runtime-check', 'blank.png')
 let health
 const readinessDeadline = Date.now() + 60000
 while (!health && Date.now() < readinessDeadline) {
   try {
-    const response = await fetch('http://localhost:5173/api/health', { signal: AbortSignal.timeout(3000) })
+    const response = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(3000) })
     if (response.ok) health = await response.json()
   } catch { /* Cold-start model loading can temporarily leave the API unavailable. */ }
   if (!health) await new Promise(resolve => setTimeout(resolve, 500))
@@ -68,7 +70,7 @@ try {
       pending.delete(data.id)
       if (data.error) request.reject(new Error(data.error.message)); else request.resolve(data.result)
     }
-    if (data.method === 'Network.responseReceived' && data.params.response.url.startsWith('http://localhost:5173') && data.params.response.status >= 400) badResponses.push(data.params.response.url)
+    if (data.method === 'Network.responseReceived' && data.params.response.url.startsWith(baseUrl) && data.params.response.status >= 400) badResponses.push(data.params.response.url)
     if (data.method === 'Page.javascriptDialogOpening') command('Page.handleJavaScriptDialog', { accept: true }).catch(() => {})
     if (data.method === 'Runtime.exceptionThrown') browserExceptions.push(data.params.exceptionDetails)
     if (data.method === 'Browser.downloadProgress' && data.params.state === 'completed') downloadedReport = data.params.guid
@@ -105,7 +107,7 @@ try {
   await command('Network.enable')
   if (pollingOnly) await command('Fetch.enable', { patterns: [{ urlPattern: '*://*/api/scans*', requestStage: 'Request' }] })
   await command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
-  await command('Page.navigate', { url: 'http://localhost:5173/' })
+  await command('Page.navigate', { url: `${baseUrl}/` })
   await waitFor("document.body.innerText.includes('Scan Your Media')")
   if (pollingOnly) {
     const doc = await command('DOM.getDocument')
@@ -167,7 +169,7 @@ try {
   const report = JSON.parse(readFileSync(join(profile, 'downloads', downloadedName), 'utf8'))
   assert.ok(Array.isArray(report.warnings) && report.warnings.length > 0)
   console.log('Browser report JSON download passed.')
-  await command('Page.navigate', { url: 'http://localhost:5173/history' })
+  await command('Page.navigate', { url: `${baseUrl}/history` })
   await waitFor("document.body.innerText.includes('blank.png')")
   await evaluate("document.querySelector('button[aria-label=\"Delete blank.png\"]').click()")
   await waitFor("document.body.innerText.includes('No scans yet')")
@@ -175,7 +177,7 @@ try {
   for (const label of [0, 1]) {
     const imagePath = join(project, 'backend/data/general-ai-fixtures', label ? 'ai-0.jpg' : 'real-0.jpg')
     assert.ok(existsSync(imagePath), 'Missing general real/AI fixture')
-    await command('Page.navigate', { url: 'http://localhost:5173/' })
+    await command('Page.navigate', { url: `${baseUrl}/` })
     await waitFor("document.querySelector('input[type=file]')")
     const doc = await command('DOM.getDocument')
     const field = await command('DOM.querySelector', { nodeId: doc.root.nodeId, selector: 'input[type=file]' })
@@ -192,12 +194,12 @@ try {
   console.log('Browser general real and AI-generated image upload/render passed (integration, not accuracy benchmark).')
   }
   for (const [route, title] of [['/privacy', 'Privacy Policy'], ['/terms', 'Terms of Service']]) {
-    await command('Page.navigate', { url: `http://localhost:5173${route}` })
+    await command('Page.navigate', { url: `${baseUrl}${route}` })
     await waitFor(`document.body.innerText.includes(${JSON.stringify(title)})`)
   }
   assert.deepEqual(badResponses, [])
   assert.deepEqual(browserExceptions, [], 'Uncaught browser application exception')
-  await command('Page.navigate', { url: 'http://localhost:5173/' })
+  await command('Page.navigate', { url: `${baseUrl}/` })
   await waitFor("document.body.innerText.includes('Scan Your Media')")
   assert.ok(await evaluate("!document.body.innerText.includes('Technology Stack') && !document.body.innerText.includes('Built for Serious Forensics')"), 'Redundant marketing sections should be absent')
   const screenshot = await command('Page.captureScreenshot', { format: 'png' })
@@ -214,7 +216,7 @@ try {
   await evaluate("document.querySelector('#mobile-navigation a[href=\"#features\"]').click()")
   await waitFor("location.hash === '#features' && !document.querySelector('#mobile-navigation')")
   assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'Expanded navigation overflows mobile viewport')
-  await command('Page.navigate', { url: 'http://localhost:5173/history' })
+  await command('Page.navigate', { url: `${baseUrl}/history` })
   await waitFor("document.body.innerText.includes('Your Scan History') && !document.body.innerText.includes('Loading scans')")
   assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'History overflows mobile viewport')
   console.log(navigationOnly ? `Read-only desktop/mobile navbar, section links and routes passed. Screenshot: ${output}` : `Browser report, private history and deletion passed. Screenshot: ${output}`)

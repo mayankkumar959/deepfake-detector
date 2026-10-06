@@ -26,6 +26,24 @@ Earlier UFD, published SigLIP and two local heads failed regressions and are ina
 
 ## Verification and artifacts
 
+Reverified 2026-10-06 after restoring 17 accidentally deleted backend router/service
+modules. Latest frontend score comparison remains intact. All tracked files are
+present and active model artifact SHA256 checks pass. Startup now rejects missing
+essential backend source files explicitly.
+
+Current checks: 6 database compatibility tests passed; 7 general-image/API tests
+passed (including upload validation/session access and sampled-frame video
+contract). The optional user-camera test was skipped because no explicit
+CAMERA_REGRESSION_IMAGE was supplied; private uploads were not read implicitly.
+The live Neon regression passed TLS, startup, inference, JSONB, owner isolation,
+private media/history and deletion, cleaning only its own disposable test records.
+Production frontend build, UI/startup checks, mocked reload/polling/score tests,
+and actual browser uploads/report download/history/deletion/desktop-mobile routes
+passed. Full browser integration used a separate local test API and disposable
+SQLite/media storage, not the user's live scan history.
+These are functional regressions, not new broad accuracy or video benchmarks.
+Docker and public-hosting execution remain unverified.
+
 From backend run python verify_general.py. Optional CAMERA_REGRESSION_IMAGE enables the known-real-photo test. Test storage is disposable. Model-folder integration_evaluation.json and camera_regression.json store results when checks pass.
 Frontend: npm run build, verify:ui, check:startup and verify:browser. Browser checks require APP_ENV=test and isolated database/uploads.
 Completed 2026-10-05: 6 backend regression tests, production frontend build,

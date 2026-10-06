@@ -6,7 +6,20 @@ import { fileURLToPath } from 'node:url'
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const project = resolve(frontend, '..')
 const mode = process.argv[2] || '--both'
+const requiredBackendFiles = [
+  'app/main.py', 'app/config.py', 'app/database.py', 'app/models.py',
+  'app/routers/__init__.py', 'app/routers/admin.py', 'app/routers/auth.py',
+  'app/routers/dashboard.py', 'app/routers/health.py', 'app/routers/scans.py',
+  'app/services/__init__.py', 'app/services/celery_app.py', 'app/services/detector.py',
+  'app/services/face_utils.py', 'app/services/frame_analysis.py',
+  'app/services/image_analysis.py', 'app/services/report.py',
+  'app/services/retention.py', 'app/services/scan_access.py',
+  'app/services/storage.py', 'app/services/video_analysis.py',
+  'app/ml/general_image.py',
+]
 function findPython() {
+  const missing = requiredBackendFiles.filter(file => !existsSync(join(project, 'backend', file)))
+  if (missing.length) throw new Error(`Required backend files are missing. Restore them from Git before starting: ${missing.join(', ')}`)
   const candidates = [process.env.FORTEXA_PYTHON, join(project, '.venv', 'Scripts', 'python.exe'), join(project, '.venv', 'bin', 'python')]
   if (process.env.LOCALAPPDATA) {
     for (const parent of [join(process.env.LOCALAPPDATA, 'Python'), join(process.env.LOCALAPPDATA, 'Programs', 'Python')]) {

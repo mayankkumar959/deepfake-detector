@@ -37,7 +37,10 @@ class GeneralTests(unittest.TestCase):
     def upload(self, image, name='fixture.jpg'):
         ok, data = cv2.imencode('.jpg', image)
         self.assertTrue(ok)
-        response = self.client.post('/api/scans', headers=HEADERS, files={'file': (name, data.tobytes(), 'image/jpeg')})
+        return self.upload_bytes(data.tobytes(), name, 'image/jpeg')
+
+    def upload_bytes(self, contents, name, content_type):
+        response = self.client.post('/api/scans', headers=HEADERS, files={'file': (name, contents, content_type)})
         self.assertEqual(response.status_code, 201, response.text)
         scan_id = response.json()['id']
         for _ in range(400):
@@ -64,6 +67,39 @@ class GeneralTests(unittest.TestCase):
     def test_small_image_is_inconclusive(self):
         image = np.random.default_rng(42).integers(0, 256, (64, 64, 3), dtype=np.uint8)
         self.assertEqual(self.upload(image)['verdict'], 'inconclusive')
+
+    def test_upload_validation_and_session_access(self):
+        for filename, payload in [('script.exe', b'not-media'), ('empty.jpg', b''), ('broken.jpg', b'not-an-image')]:
+            response = self.client.post('/api/scans', headers=HEADERS, files={'file': (filename, payload, 'image/jpeg')})
+            self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(self.client.get('/api/scans').status_code, 401)
+        self.assertEqual(self.client.get('/api/scans', headers={'X-Scan-Session': 'invalid'}).status_code, 401)
+
+    def test_video_sampled_frame_contract(self):
+        # Synthetic video packaging checks only; not video-detector accuracy.
+        image = cv2.imread(str(ROOT / 'data/general-ai-fixtures/real-0.jpg'))
+        self.assertIsNotNone(image)
+        path = Path(TEMP.name) / 'sampled-frames.avi'
+        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*'MJPG'), 4, (256, 256))
+        self.assertTrue(writer.isOpened())
+        try:
+            for _ in range(4):
+                writer.write(cv2.resize(image, (256, 256)))
+        finally:
+            writer.release()
+        scan = self.upload_bytes(path.read_bytes(), path.name, 'video/x-msvideo')
+        self.assertEqual(scan['media_type'], 'video')
+        self.assertEqual(scan['report']['analyzed_frames'], 4)
+        self.assertEqual(len(scan['report']['timeline']), 4)
+        self.assertIsNone(scan['confidence'])
+        for frame in scan['report']['timeline']:
+            self.assertIn('classified', frame)
+            self.assertTrue(0 <= frame['fake_probability'] <= 1)
+        route = f"/api/scans/{scan['id']}"
+        token = scan['media_token']
+        self.assertEqual(self.client.get(route + '/media/thumbnail.jpg?token=' + token).status_code, 200)
+        self.assertEqual(self.client.delete(route, headers=OTHER).status_code, 404)
+        self.assertEqual(self.client.delete(route, headers=HEADERS).status_code, 204)
 
     def test_actual_generated_and_real_images_through_api(self):
         records = []
