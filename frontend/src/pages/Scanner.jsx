@@ -154,7 +154,7 @@ export default function Scanner() {
   const fileType = file?.type?.startsWith('video') ? 'video' : 'image'
   const mediaUrl = result ? scanMediaUrl(result) : ''
 
-  const hasScore = result?.report?.ml_probability != null
+  const hasScore = result?.report?.ml_probability != null && typeof result?.fake_probability === 'number' && Number.isFinite(result.fake_probability)
   const navigateSection = event => {
     setMenuOpen(false)
     if (status === 'done') {
@@ -196,8 +196,8 @@ export default function Scanner() {
         <main className="mx-auto max-w-3xl animate-fade-in px-4 py-10 lg:px-8">
           <div className="card flex flex-col items-center text-center">
             <h1 className="mb-6 text-2xl font-bold">{result.verdict === 'inconclusive' ? 'Inconclusive Analysis' : 'Analysis Result'}</h1>
-            {hasScore && <Gauge value={result.fake_probability || 0} size={200} />}
-            {result.verdict && <div className="mt-4"><VerdictBadge verdict={result.verdict} /></div>}
+            {result.verdict && <div className="mb-5"><VerdictBadge verdict={result.verdict} size="lg" /></div>}
+            {hasScore && <Gauge value={result.fake_probability} verdict={result.verdict} size={200} />}
             <p className="mt-3 max-w-full truncate text-sm text-fortexa-muted">{result.filename}</p>
             {!hasScore && <p className="mt-3 text-sm text-amber-300">
               {result.report?.warnings?.some(warning => warning.includes('insufficient visual detail'))

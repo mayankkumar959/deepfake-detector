@@ -15,6 +15,9 @@ venv/
 node_modules/
 dist/
 
+# Local presentation deliverables and generation scripts
+/presentation/
+
 # Databases & uploads
 *.db
 *.sqlite3

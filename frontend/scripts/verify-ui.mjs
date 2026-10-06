@@ -12,6 +12,8 @@ import assert from 'node:assert/strict';
 import App from './src/App.jsx';
 import VideoTimeline from './src/components/ui/VideoTimeline.jsx';
 import ScanNotes from './src/components/ui/ScanNotes.jsx';
+import Gauge from './src/components/ui/Gauge.jsx';
+import VerdictBadge from './src/components/ui/VerdictBadge.jsx';
 import { mediaUrl } from './src/api/client.js';
 const scan = { id: 'abc123', filename: 'a & b.jpg', media_token: 'private-token' };
 assert.equal(mediaUrl(scan), 'https://api.example.test/api/scans/abc123/media/original?token=private-token');
@@ -21,10 +23,25 @@ const timeline = renderToStaticMarkup(<VideoTimeline entries={[
   {index:1,time:2,fake_probability:0.1,classified:true},
   {index:2,time:3,fake_probability:0.5,classified:false}
 ]} />);
-assert.ok(timeline.includes('85% fake model score'));
+assert.ok(timeline.includes('AI-generation score: 85 / 100'));
 assert.ok(timeline.includes('No classification'));
 assert.ok(timeline.includes('1.5s'));
 assert.ok(!timeline.includes('undefined') && !timeline.includes('NaN'));
+for (const [value, signal] of [[0,'Low AI signal'],[.11,'Low AI signal'],[.4,'Low AI signal'],[.5,'Mixed AI signal'],[.6,'High AI signal'],[1,'High AI signal']]) {
+ const gauge = renderToStaticMarkup(<Gauge value={value} />);
+ assert.ok(gauge.includes(Math.round(value * 100) + ' / 100'));
+ assert.ok(gauge.includes(signal) && gauge.includes('AI-generation score'));
+ assert.ok(gauge.includes('Real-image score') && gauge.includes('AI-generation score'));
+ assert.ok(gauge.includes((100 - Math.round(value * 100)) + ' / 100'));
+ assert.ok(gauge.includes('not proof of authenticity'));
+ assert.ok(!gauge.includes('AI Model Score') && !gauge.replace(/<[^>]*>/g, '').includes('11%'));
+}
+for (const value of [undefined,null,NaN,Infinity,-.1,1.1]) {
+ const gauge = renderToStaticMarkup(<Gauge value={value} />);
+ assert.ok(gauge.includes('unavailable') && !gauge.includes('NaN'));
+}
+assert.ok(renderToStaticMarkup(<Gauge value={.11} verdict="inconclusive" />).includes('Needs review'));
+assert.ok(renderToStaticMarkup(<VerdictBadge verdict="real" size="lg" />).includes('Likely real photo'));
 const notes = renderToStaticMarkup(<ScanNotes warnings={['Detailed research limitation']} isVideo />);
 assert.ok(notes.includes('Results can be wrong') && notes.includes('sampled frames only'));
 assert.ok(notes.includes('<details') && !notes.includes('<details open'));

@@ -1,49 +1,36 @@
-export default function Gauge({ value, size = 180, label = 'AI Model Score' }) {
-  const pct = Math.round(value * 100)
-  const radius = (size - 20) / 2
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (pct / 100) * circumference
-  const color = value >= 0.6 ? '#ef4444' : value >= 0.4 ? '#f59e0b' : '#22c55e'
-
+export default function Gauge({ value, label = 'AI-generation score', verdict }) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    return <p className="text-sm text-fortexa-muted">Model scores unavailable</p>
+  }
+  const ai = Math.round(value * 100)
+  const real = 100 - ai
+  const uncertain = verdict === 'inconclusive'
+  const signal = uncertain ? 'Needs review' : value >= 0.6 ? 'High AI signal' : value <= 0.4 ? 'Low AI signal' : 'Mixed AI signal'
   return (
-    <div className="flex flex-col items-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={14}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={14}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-        />
-        <text
-          x="50%"
-          y="48%"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={size / 5}
-          fontWeight={800}
-          fill={color}
-        >
-          {pct}%
-        </text>
-        <text x="50%" y="63%" textAnchor="middle" dominantBaseline="central" fontSize={11} fill="#94a3b8">
-          {label}
-        </text>
-      </svg>
+    <div className="w-full max-w-md text-left" aria-label={`${label}: ${ai} out of 100. Real-image score: ${real} out of 100. ${signal}.`}>
+      <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-fortexa-muted">Classification scores</p>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 sm:p-4">
+          <p className="text-xs font-semibold text-emerald-300 sm:text-sm">Real-image score</p>
+          <p className="mt-2 whitespace-nowrap text-xl font-bold text-emerald-400 sm:text-3xl">{real} / 100</p>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" role="meter" aria-label="Real-image score" aria-valuemin={0} aria-valuemax={100} aria-valuenow={real}>
+            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${real}%` }} />
+          </div>
+        </div>
+        <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3 sm:p-4">
+          <p className="text-xs font-semibold text-red-300 sm:text-sm">AI-generation score</p>
+          <p className="mt-2 whitespace-nowrap text-xl font-bold text-red-400 sm:text-3xl">{ai} / 100</p>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" role="meter" aria-label="AI-generation score" aria-valuemin={0} aria-valuemax={100} aria-valuenow={ai}>
+            <div className="h-full rounded-full bg-red-500" style={{ width: `${ai}%` }} />
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-center text-sm text-fortexa-muted">
+        {uncertain || (value > .4 && value < .6)
+          ? 'A clear classification could not be established.'
+          : value <= .4 ? 'Assessment: likely real photograph.' : 'Assessment: likely AI-generated image.'}
+      </p>
+      <p className="mt-2 text-center text-xs leading-relaxed text-fortexa-muted">Higher scores indicate stronger model support—not proof of authenticity.</p>
     </div>
   )
 }

@@ -139,10 +139,8 @@ export default function Results() {
         {/* Left: Gauge + media + heatmap */}
         <div className="space-y-6">
           <div className="card flex flex-col items-center">
-            {report?.ml_probability != null ? <Gauge value={scan.fake_probability || 0} size={180} /> : <p className="text-sm text-fortexa-muted">No reliable score available</p>}
-            <div className="mt-4 text-center">
-              <p className="text-xs text-fortexa-muted">AI model score · not confidence</p>
-            </div>
+            {scan.verdict && <div className="mb-4"><VerdictBadge verdict={scan.verdict} size="lg" /></div>}
+            {report?.ml_probability != null ? <Gauge value={scan.fake_probability} verdict={scan.verdict} size={180} /> : <p className="text-sm text-fortexa-muted">AI-generation score unavailable</p>}
           </div>
 
           <div className="card !p-0 overflow-hidden">
