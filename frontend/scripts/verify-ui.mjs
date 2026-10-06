@@ -33,6 +33,10 @@ for (const [path, expected] of [['/','Scan Your Media'],['/history','Your Scan H
  const html = renderToStaticMarkup(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
  assert.ok(html.includes(expected), path + ' did not render expected content');
  if (path === '/') {
+   for (const section of ['detect', 'features', 'how', 'faq']) {
+     assert.ok(html.includes('href="#' + section + '"') && html.includes('id="' + section + '"'), section + ' navigation target is missing');
+   }
+   assert.ok(html.includes('Main navigation') && html.includes('Open navigation'));
    for (const obsolete of ['Technology Stack', 'Cost Forever', 'Built for Serious Forensics', 'Three Steps to a Verdict']) assert.ok(!html.includes(obsolete));
  }
 }

@@ -6,6 +6,8 @@ import { resolve, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const navigationOnly = process.argv.includes('--navigation-only')
+const pollingOnly = process.argv.includes('--polling-only')
 const fixture = join(project, 'backend', '.runtime-check', 'blank.png')
 let health
 const readinessDeadline = Date.now() + 60000
@@ -17,8 +19,8 @@ while (!health && Date.now() < readinessDeadline) {
   if (!health) await new Promise(resolve => setTimeout(resolve, 500))
 }
 assert.ok(health, 'API did not become ready within 60 seconds')
-assert.equal(health.environment, 'test', 'Browser checks require an isolated APP_ENV=test backend; refusing to mutate normal user data.')
-if (!existsSync(fixture)) throw new Error('Create backend/.runtime-check/blank.png before running this isolated browser check.')
+if (!navigationOnly && !pollingOnly) assert.equal(health.environment, 'test', 'Browser checks require an isolated APP_ENV=test backend; refusing to mutate normal user data.')
+if (!navigationOnly && !existsSync(fixture)) throw new Error('Create backend/.runtime-check/blank.png before running this isolated browser check.')
 const browser = [process.env.FORTEXA_BROWSER, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].filter(Boolean).find(existsSync)
 if (!browser) throw new Error('Chrome or Edge is required')
 const profile = mkdtempSync(join(tmpdir(), 'fortexa-browser-check-'))
@@ -32,6 +34,7 @@ const pending = new Map()
 const badResponses = []
 const browserExceptions = []
 let downloadedReport
+let finishMockScan = false
 function command(method, params = {}) {
   return new Promise((resolveCommand, reject) => {
     const id = nextId++
@@ -69,6 +72,19 @@ try {
     if (data.method === 'Page.javascriptDialogOpening') command('Page.handleJavaScriptDialog', { accept: true }).catch(() => {})
     if (data.method === 'Runtime.exceptionThrown') browserExceptions.push(data.params.exceptionDetails)
     if (data.method === 'Browser.downloadProgress' && data.params.state === 'completed') downloadedReport = data.params.guid
+    if (pollingOnly && data.method === 'Fetch.requestPaused') {
+      const { requestId, request } = data.params
+      const isMedia = request.url.includes('/media/')
+      const body = isMedia ? readFileSync(fixture).toString('base64') : Buffer.from(JSON.stringify(
+        request.method === 'POST' ? { id: 'polling-test', status: 'pending' } : {
+          id: 'polling-test', filename: 'fixture.png', media_type: 'image', media_token: 'mock-token',
+          status: finishMockScan ? 'completed' : 'processing', verdict: finishMockScan ? 'real' : null,
+          fake_probability: .15, real_probability: .85,
+          report: { ml_probability: .15, warnings: ['Browser regression fixture'] },
+        })).toString('base64')
+      command('Fetch.fulfillRequest', { requestId, responseCode: request.method === 'POST' ? 201 : 200,
+        responseHeaders: [{ name: 'Content-Type', value: isMedia ? 'image/png' : 'application/json' }], body }).catch(error => browserExceptions.push(error.message))
+    }
   }
   let buffer = ''
   processHandle.stdio[4].on('data', chunk => {
@@ -87,9 +103,37 @@ try {
   await command('Runtime.enable')
   await command('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: join(profile, 'downloads'), eventsEnabled: true })
   await command('Network.enable')
+  if (pollingOnly) await command('Fetch.enable', { patterns: [{ urlPattern: '*://*/api/scans*', requestStage: 'Request' }] })
   await command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await command('Page.navigate', { url: 'http://localhost:5173/' })
   await waitFor("document.body.innerText.includes('Scan Your Media')")
+  if (pollingOnly) {
+    const doc = await command('DOM.getDocument')
+    const field = await command('DOM.querySelector', { nodeId: doc.root.nodeId, selector: 'input[type=file]' })
+    await command('DOM.setFileInputFiles', { nodeId: field.nodeId, files: [fixture] })
+    await waitFor("document.body.innerText.includes('Start Analysis')")
+    await evaluate("Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Start Analysis')).click()")
+    await waitFor("document.body.innerText.includes('Analyzing…') && sessionStorage.getItem('fortexa_active_scan')")
+    await command('Page.reload')
+    await waitFor("document.body.innerText.includes('Analyzing…') && document.body.innerText.includes('Your scan')")
+    finishMockScan = true
+    await waitFor("document.body.innerText.includes('Analysis Result')")
+    await waitFor("!sessionStorage.getItem('fortexa_active_scan')")
+    await evaluate("document.querySelector('nav[aria-label=\"Main navigation\"] a[href=\"#features\"]').click()")
+    await waitFor("location.hash === '#features' && document.getElementById('features') && document.querySelector('input[type=file]')")
+    await evaluate("sessionStorage.setItem('fortexa_active_scan', JSON.stringify({id:'polling-test', started:Date.now()-11*60*1000}))")
+    await command('Page.reload')
+    await waitFor("document.body.innerText.includes('Analysis is taking too long') && document.body.innerText.includes('Try again')")
+    assert.deepEqual(browserExceptions, [])
+    console.log('PASS: upload polling resumes after reload, renders completion, clears saved job, result navbar returns to sections, and expired jobs show an error. Scan API requests were mocked; no user/Neon data mutated.')
+    await command('Browser.close')
+  } else {
+  assert.ok(await evaluate("['detect','features','how','faq'].every(id=>document.querySelector('nav[aria-label=\"Main navigation\"] a[href=\"#'+id+'\"]') && document.getElementById(id))"), 'Navbar links and section targets must exist')
+  for (const id of ['features', 'how', 'faq', 'detect']) {
+    await evaluate(`document.querySelector('nav[aria-label="Main navigation"] a[href="#${id}"]').click()`)
+    await waitFor(`location.hash === '#${id}'`)
+  }
+  if (!navigationOnly) {
   const document = await command('DOM.getDocument')
   const input = await command('DOM.querySelector', { nodeId: document.root.nodeId, selector: 'input[type=file]' })
   await command('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [fixture] })
@@ -135,6 +179,7 @@ try {
     await waitFor("Array.from(document.querySelectorAll('img')).filter(i=>i.src.includes('/api/scans/')).every(i=>i.complete&&i.naturalWidth>0)")
   }
   console.log('Browser general real and AI-generated image upload/render passed (integration, not accuracy benchmark).')
+  }
   for (const [route, title] of [['/privacy', 'Privacy Policy'], ['/terms', 'Terms of Service']]) {
     await command('Page.navigate', { url: `http://localhost:5173${route}` })
     await waitFor(`document.body.innerText.includes(${JSON.stringify(title)})`)
@@ -153,11 +198,17 @@ try {
   const mobileScreenshot = await command('Page.captureScreenshot', { format: 'png' })
   writeFileSync(join(project, 'backend/.runtime-check/browser-scanner-mobile.png'), Buffer.from(mobileScreenshot.data, 'base64'))
   assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.textContent.includes('Your Scans') && a.getBoundingClientRect().width>0)"), 'Mobile history navigation is inaccessible')
+  await evaluate("document.querySelector('button[aria-label=\"Open navigation\"]').click()")
+  assert.ok(await evaluate("document.querySelector('#mobile-navigation').getBoundingClientRect().height > 0 && document.querySelectorAll('#mobile-navigation a').length === 4"), 'Mobile section navigation is inaccessible')
+  await evaluate("document.querySelector('#mobile-navigation a[href=\"#features\"]').click()")
+  await waitFor("location.hash === '#features' && !document.querySelector('#mobile-navigation')")
+  assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'Expanded navigation overflows mobile viewport')
   await command('Page.navigate', { url: 'http://localhost:5173/history' })
   await waitFor("document.body.innerText.includes('Your Scan History') && !document.body.innerText.includes('Loading scans')")
   assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'History overflows mobile viewport')
-  console.log(`Browser report, private history and deletion passed. Screenshot: ${output}`)
+  console.log(navigationOnly ? `Read-only desktop/mobile navbar, section links and routes passed. Screenshot: ${output}` : `Browser report, private history and deletion passed. Screenshot: ${output}`)
   await command('Browser.close')
+  }
 } finally {
   for (const request of pending.values()) clearTimeout(request.timer)
   processHandle.kill()

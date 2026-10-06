@@ -43,6 +43,8 @@ class Settings(BaseSettings):
             raise ValueError("Processing and retention limits must be positive")
         if self.APP_ENV == "production" and (len(self.SECRET_KEY) < 32 or self.SECRET_KEY.startswith("change-me")):
             raise ValueError("Set a random SECRET_KEY of at least 32 characters for production")
+        if self.APP_ENV == 'production' and not self.DATABASE_URL.startswith(('postgresql://', 'postgresql+psycopg://', 'postgres://')):
+            raise ValueError('Set the Neon PostgreSQL DATABASE_URL for production; SQLite is reserved for offline/local tests')
         return self
 
     ALLOWED_IMAGE_EXT: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp", ".bmp")
@@ -51,6 +53,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "ignore"
+        hide_input_in_errors = True
 
     @property
     def upload_dir(self) -> Path:

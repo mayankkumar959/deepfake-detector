@@ -22,9 +22,8 @@ ARG MODEL_DIR=runs/general-ai-trained-indoor-20261005
 COPY ${MODEL_DIR}/ ./runs/active/
 RUN mkdir -p /app/data/uploads
 
-# Persist DB + uploads on a mounted volume at /app/data
-ENV DATABASE_URL=sqlite+aiosqlite:////app/data/fortexa.db \
-    UPLOAD_DIR=/app/data/uploads \
+# Supply Neon DATABASE_URL via hosting secrets; persist media at /app/data.
+ENV UPLOAD_DIR=/app/data/uploads \
     RUNS_DIR=/app/runs/active \
     DETECTOR_TASK=ai-image \
     APP_ENV=production

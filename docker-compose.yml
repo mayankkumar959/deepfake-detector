@@ -12,6 +12,7 @@ services:
       - FRONTEND_ORIGIN=http://localhost:3000
       # Required: set SECRET_KEY in your shell or the project-root .env.
       - SECRET_KEY=${SECRET_KEY:?Set a random SECRET_KEY of at least 32 characters}
+      - DATABASE_URL=${DATABASE_URL:?Set your Neon PostgreSQL connection string in the shell or project-root .env}
     volumes:
       - fortexa_data:/app/data
     restart: unless-stopped

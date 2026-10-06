@@ -17,6 +17,8 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false
     # NOTE: Free plan has no persistent disk — DB/uploads reset on redeploy.
     # Upgrade to Starter ($7/mo) and uncomment below for persistence:
     # disk:

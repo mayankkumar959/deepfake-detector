@@ -117,7 +117,7 @@ def process_scan(scan_id: str):
 
         # Update DB record
         elapsed_ms = int((time.perf_counter() - started) * 1000)
-        scan.report = json.dumps(report)
+        scan.report = report
         scan.status = "completed"
         scan.verdict = report["verdict"]
         scan.fake_probability = report["fake_probability"]

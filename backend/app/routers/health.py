@@ -35,6 +35,7 @@ def health(db: Session = Depends(get_db)):
         "app": settings.APP_NAME,
         "version": "1.0.0",
         "database": "connected" if db_ok else "error",
+        "database_backend": db.get_bind().dialect.name,
         "detection_engine": ml_status,
         "background_worker": "celery" if celery_ok else "inline-thread",
         "environment": settings.APP_ENV,

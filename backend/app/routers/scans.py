@@ -72,7 +72,8 @@ def _scan_to_response(scan: ScanRecord, include_report: bool = False) -> ScanRes
         frame_count=scan.frame_count,
         created_at=scan.created_at,
         completed_at=scan.completed_at,
-        report=json.loads(scan.report) if scan.report and include_report else None,
+        report=(scan.report if isinstance(scan.report, dict) else json.loads(scan.report))
+        if scan.report and include_report else None,
         media_token=media_token(scan),
     )
 

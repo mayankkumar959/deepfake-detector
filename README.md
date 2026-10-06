@@ -6,6 +6,13 @@ Active model: backend/runs/general-ai-trained-indoor-20261005. See GENERAL_AI_ST
 
 ## Run
 
+The normal application now uses Neon PostgreSQL. Put DATABASE_URL in ignored
+backend/.env locally, or in backend-hosting secrets. Plain postgresql:// connection
+strings automatically use psycopg; SSL/channel-binding parameters are preserved.
+Production requires PostgreSQL. SQLite remains available for isolated tests only.
+Old SQLite scans are not imported. Uploaded media still needs persistent backend
+storage; Neon stores records and JSONB reports, not image/video files.
+
 From deepfake/frontend:
 
 ```powershell
@@ -25,6 +32,8 @@ Include the active trained model folder when submitting. setup-general-ai.ps1 ve
 ## Checks and scope
 
 From backend run python verify_general.py; CAMERA_REGRESSION_IMAGE enables a known-camera-photo test. Disposable test storage only.
+Database checks: python verify_database.py (offline), python verify_neon.py --live
+(explicit live PostgreSQL check; creates/deletes only its own random test session).
 Install test dependencies first: python -m pip install -r requirements-dev.txt.
 From frontend run npm run build, npm run verify:ui, npm run check:startup.
 Browser checks: npm run serve with APP_ENV=test and disposable DATABASE_URL/UPLOAD_DIR, then npm run verify:browser.

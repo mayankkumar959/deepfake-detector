@@ -1,20 +1,13 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, Enum as SAEnum
+from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.sqlite import TEXT as SQLITE_TEXT
+from sqlalchemy.dialects.postgresql import JSONB
 
 from .database import Base
-from .config import get_settings
-
-# Use a portable JSON/text type based on database dialect
-settings = get_settings()
-if "postgresql" in settings.DATABASE_URL:
-    from sqlalchemy.dialects.postgresql import JSONB
-    JSONType = JSONB
-else:
-    JSONType = SQLITE_TEXT  # SQLite: store as JSON string
+# Native JSON objects on both backends; PostgreSQL uses JSONB.
+JSONType = JSON().with_variant(JSONB(), 'postgresql')
 
 
 def _now_utc() -> datetime:
