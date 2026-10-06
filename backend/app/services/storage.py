@@ -36,6 +36,9 @@ def save_artifact(user_id: str, scan_id: str, name: str, data: bytes) -> Path:
 
 
 def delete_scan_files(user_id: str, scan_id: str):
-    d = settings.upload_dir / user_id / scan_id
+    root = settings.upload_dir.resolve()
+    d = (root / user_id / scan_id).resolve()
+    if not d.is_relative_to(root) or d == root or not user_id or not scan_id:
+        raise ValueError("Invalid scan storage path")
     if d.exists():
-        shutil.rmtree(d, ignore_errors=True)
+        shutil.rmtree(d)

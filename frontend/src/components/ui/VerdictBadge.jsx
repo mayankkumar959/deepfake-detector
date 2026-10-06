@@ -2,12 +2,12 @@ import { ShieldCheck, ShieldAlert, ShieldQuestion } from 'lucide-react'
 
 const config = {
   fake: {
-    label: 'Manipulated',
+    label: 'Likely AI-generated',
     icon: ShieldAlert,
     classes: 'bg-red-500/15 text-red-400 border border-red-500/30',
   },
   real: {
-    label: 'Authentic',
+    label: 'Likely real photo',
     icon: ShieldCheck,
     classes: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
   },

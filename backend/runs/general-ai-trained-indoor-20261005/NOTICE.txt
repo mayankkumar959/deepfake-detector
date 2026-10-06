@@ -1,0 +1,7 @@
+Base encoder: Ateeqq/ai-vs-human-image-detector, Apache License 2.0.
+Source: https://huggingface.co/Ateeqq/ai-vs-human-image-detector
+Pinned revision: 60e82406916921b823616bee33397baab38af3f0.
+Modification: original classifier replaced by a locally trained binary head
+with a train-only scaler folded into its parameters, 2026-10-05.
+Training provenance, split limitations and evaluation accompany this artifact.
+No endorsement by the upstream authors is implied.

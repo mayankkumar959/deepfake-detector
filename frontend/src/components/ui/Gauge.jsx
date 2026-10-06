@@ -1,4 +1,4 @@
-export default function Gauge({ value, size = 180, label = 'Fake Probability' }) {
+export default function Gauge({ value, size = 180, label = 'AI Model Score' }) {
   const pct = Math.round(value * 100)
   const radius = (size - 20) / 2
   const circumference = 2 * Math.PI * radius

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 # ── Auth ──────────────────────────────────────────────────────────
 
 class RegisterRequest(BaseModel):
-    email: str = Field(..., min_length=5, max_length=255)
+    email: EmailStr = Field(..., max_length=255)
     username: str = Field(..., min_length=3, max_length=100)
     password: str = Field(..., min_length=6, max_length=128)
     full_name: Optional[str] = None
@@ -73,6 +73,7 @@ class ScanResponse(BaseModel):
 
     # Full report (only included in detail endpoint)
     report: Optional[Any] = None
+    media_token: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -114,7 +115,7 @@ class TrendPoint(BaseModel):
 # ── Admin ─────────────────────────────────────────────────────────
 
 class AdminUserUpdate(BaseModel):
-    role: Optional[str] = None
+    role: Optional[Literal['user', 'admin']] = None
     is_active: Optional[bool] = None
 
 

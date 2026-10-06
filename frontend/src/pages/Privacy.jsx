@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import Logo from '../components/layout/Logo'
 
-const LAST_UPDATED = 'August 25, 2026'
+const LAST_UPDATED = 'October 5, 2026'
 
 const sections = [
   {
@@ -18,14 +18,15 @@ const sections = [
     list: [
       'Uploaded media files (photos or videos) — stored temporarily to perform forensic analysis;',
       'Technical metadata — file name, size, type, and upload timestamp;',
-      'Analysis results — verdicts, probability scores, confidence values and generated artifacts such as heatmaps;',
-      'Server logs — standard HTTP request logs (IP address, user agent) retained briefly for security and debugging.',
+      'Analysis results — verdicts, uncalibrated AI-generation scores, diagnostic signals and score annotations or video thumbnails;',
+      'Server logs — HTTP request information for security and debugging. Log retention is controlled by the deployment; the scan-retention job does not purge logs.',
     ],
   },
   {
     title: '3. No Account, No Personal Profile',
     body: [
-      'The Service does not require registration. We do not ask for — or store — your name, email address, phone number, payment details or government identifiers. Because no account exists, we cannot link analyses to your identity beyond the temporary server session.',
+      'The scanner does not require registration. History is linked to a random browser key; the server stores a hashed session identifier. Clearing browser storage removes your access, not the server records immediately. Session user identifiers may remain after expired scans are purged.',
+      'Optional API registration stores the supplied email, username, profile fields and a password hash. The scanner does not request payment details or government identifiers.',
     ],
   },
   {
@@ -51,8 +52,8 @@ const sections = [
   {
     title: '6. Data Retention & Deletion',
     body: [
-      'Uploads and their analysis artifacts are retained only as long as necessary to operate the demonstration environment, after which they are automatically purged from disk. Database records may persist in anonymized form for aggregate statistics.',
-      'Because scans are accessed via unguessable unique links and are not tied to any account, deleting your browser history effectively severs your access to past results; residual server copies expire on schedule.',
+      'New scans are retained for 24 hours by default (the scanner shows the configured period). Completed and failed scans, reports and files are deleted by a cleanup task every 15 minutes while the backend runs. Processing scans are not deleted mid-analysis. Legacy demonstration records created before session privacy was added are excluded and require administrator removal.',
+      'A random session key stored in your browser protects access to your reports and history. Clearing site storage removes your access; it does not immediately delete server files. Use Delete Scan in your history to remove a finished scan sooner.',
     ],
   },
   {

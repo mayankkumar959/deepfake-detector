@@ -3,6 +3,8 @@
 FastAPI application entry point.
 """
 import json
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -13,19 +15,25 @@ from fastapi.responses import JSONResponse
 from .config import get_settings
 from .database import Base, engine, SessionLocal
 from .models import User
-from .security import hash_password
+from .security import hash_password, verify_password
 from .routers import auth, scans, dashboard, admin, health
 from .services.storage import ensure_dirs
 from .ml.engine import load_ml_engine
+from .services.retention import purge_expired_scans
 
 settings = get_settings()
 
 
 def _seed_admin():
     """Create default admin if not exists."""
+    if not settings.ADMIN_PASSWORD or settings.ADMIN_PASSWORD == "Admin@12345":
+        return
     db = SessionLocal()
     try:
         admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+        if admin is not None and verify_password("Admin@12345", admin.hashed_password):
+            admin.hashed_password = hash_password(settings.ADMIN_PASSWORD)
+            db.commit()
         if admin is None:
             admin = User(
                 email=settings.ADMIN_EMAIL,
@@ -47,10 +55,26 @@ async def lifespan(app: FastAPI):
     ensure_dirs()
     Base.metadata.create_all(bind=engine)
     _seed_admin()
-    load_ml_engine()
+    if settings.DETECTOR_TASK == 'legacy-face':
+        load_ml_engine()
     ml_status = __import__("app.ml.engine", fromlist=["get_ml_status"]).get_ml_status()
     print(f"[OK] Detection engine: {ml_status['status']} ({ml_status['model']})")
-    yield
+    async def retention_loop():
+        while True:
+            try:
+                await asyncio.to_thread(purge_expired_scans)
+            except Exception:
+                logging.getLogger(__name__).exception("Retention cleanup failed")
+            await asyncio.sleep(900)
+    retention_task = asyncio.create_task(retention_loop())
+    try:
+        yield
+    finally:
+        retention_task.cancel()
+        try:
+            await retention_task
+        except asyncio.CancelledError:
+            pass
     # Shutdown (nothing to clean)
 
 
@@ -81,9 +105,10 @@ app.add_middleware(
 # ── Global exception handler ──────────────────────────────────────
 @app.exception_handler(Exception)
 async def global_exc_handler(request: Request, exc: Exception):
+    logging.getLogger(__name__).exception("Unhandled API error", exc_info=exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {str(exc)[:300]}"},
+        content={"detail": "An internal error occurred. Please retry or check server logs."},
     )
 
 # ── Routers ───────────────────────────────────────────────────────

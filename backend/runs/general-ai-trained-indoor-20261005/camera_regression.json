@@ -1,0 +1,17 @@
+{
+  "scope": "Single user camera photo, not used in training. JPEG recompression is not WhatsApp emulation.",
+  "records": [
+    {
+      "jpeg_quality": 95,
+      "ai_score": 0.15928390622138977
+    },
+    {
+      "jpeg_quality": 60,
+      "ai_score": 0.1602565348148346
+    },
+    {
+      "jpeg_quality": 40,
+      "ai_score": 0.12402993440628052
+    }
+  ]
+}

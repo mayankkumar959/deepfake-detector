@@ -4,10 +4,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n api,web -c green,cyan \"cd ..\\backend && python -m uvicorn app.main:app --reload --port 8000\" \"vite\"",
-    "dev:web": "vite",
-    "dev:api": "cd ..\\backend && python -m uvicorn app.main:app --reload --port 8000",
-    "build": "vite build",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "node scripts/dev.mjs --web",
+    "dev:api": "node scripts/dev.mjs --api",
+    "serve": "node scripts/dev.mjs --serve",
+    "build": "node scripts/build.mjs",
+    "verify:ui": "node scripts/verify-ui.mjs",
+    "verify:browser": "node scripts/verify-browser.mjs",
+    "check:startup": "node scripts/dev.mjs --check",
     "preview": "vite preview"
   },
   "dependencies": {

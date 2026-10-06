@@ -1,7 +1,7 @@
 """Neural network model definitions for Fortexa deepfake detection.
 
-Training requires PyTorch + torchvision. Runtime gracefully falls back to
-the heuristic engine when no trained artifact / torch is available.
+Training requires PyTorch + torchvision. Runtime returns an inconclusive
+classification when no trained artifact or PyTorch is available.
 """
 from typing import Optional
 
@@ -33,7 +33,7 @@ def _add_head(model, num_features: int, dropout: float = 0.3):
     return model
 
 
-def build_model(arch: str = "resnet18", num_classes: int = 1, dropout: float = 0.3):
+def build_model(arch: str = "resnet18", num_classes: int = 1, dropout: float = 0.3, pretrained: bool = False):
     """Build a binary classifier (1 logit for fake probability).
 
     arch: tiny | resnet18 | efficientnet_b0
@@ -63,12 +63,12 @@ def build_model(arch: str = "resnet18", num_classes: int = 1, dropout: float = 0
         return model
 
     if arch == "resnet18":
-        weights = tv_models.ResNet18_Weights.DEFAULT
+        weights = tv_models.ResNet18_Weights.DEFAULT if pretrained else None
         model = tv_models.resnet18(weights=weights)
         return _add_head(model, model.fc.in_features, dropout)
 
     if arch == "efficientnet_b0":
-        weights = tv_models.EfficientNet_B0_Weights.DEFAULT
+        weights = tv_models.EfficientNet_B0_Weights.DEFAULT if pretrained else None
         model = tv_models.efficientnet_b0(weights=weights)
         model.classifier[1] = __import__("torch.nn").nn.Linear(
             model.classifier[1].in_features, 1

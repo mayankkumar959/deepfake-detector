@@ -3,6 +3,7 @@
 Uses only stdlib + PyJWT to avoid bcrypt/argon2 dependency issues on Windows.
 """
 import hashlib
+import hmac
 import os
 import time
 import secrets
@@ -37,7 +38,7 @@ def verify_password(password: str, stored: str) -> bool:
         pwd_bytes = password.encode("utf-8")
         salt_bytes = bytes.fromhex(salt)
         dk = hashlib.pbkdf2_hmac("sha256", pwd_bytes, salt_bytes, PBKDF2_ITERATIONS)
-        return hsh == dk.hex()
+        return hmac.compare_digest(hsh, dk.hex())
     except (ValueError, AttributeError):
         return False
 

@@ -22,10 +22,28 @@ backend/fortexa.db
 backend/uploads/
 backend/runs/*.db
 
-# Training data (large) — model artifact (runs/model.pth) KEEP in git
+# Raw training data and inactive model candidates
 data/source_faces/
 data/demo_dataset/
+backend/data/archives/
+backend/data/genuine_dff/*
+!backend/data/genuine_dff/manifest.json
+backend/data/source_faces/
+backend/data/demo_dataset/
+backend/data/demo/
+backend/runs/candidate-*/
+**/.runtime-check/
 
 # OS junk
+backend/vendor/
+backend/runs/general-ai-ufd/
+backend/runs/general-ai-trained-20261005/
+backend/runs/general-ai-trained-scenes-20261005/
+backend/data/general-ai-fixtures/*.jpg
+!backend/data/general-ai-fixtures/ai-*.jpg
+!backend/data/general-ai-fixtures/real-*.jpg
+backend/data/general-ai-training*/
+backend/runs/general-ai*/model.safetensors
+!backend/runs/general-ai-trained-indoor-20261005/model.safetensors
 .DS_Store
 Thumbs.db

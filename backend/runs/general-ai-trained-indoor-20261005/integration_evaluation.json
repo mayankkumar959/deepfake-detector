@@ -1,0 +1,145 @@
+{
+  "scope": "10 small fixtures, two JPEG variants each; integration evidence only, not an accuracy claim",
+  "records": [
+    {
+      "fixture": "real-0",
+      "ground_truth": 0,
+      "jpeg_quality": 95,
+      "ai_score": 0.2659829556941986,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-0",
+      "ground_truth": 0,
+      "jpeg_quality": 60,
+      "ai_score": 0.005553549621254206,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-1",
+      "ground_truth": 0,
+      "jpeg_quality": 95,
+      "ai_score": null,
+      "verdict": "inconclusive"
+    },
+    {
+      "fixture": "real-1",
+      "ground_truth": 0,
+      "jpeg_quality": 60,
+      "ai_score": null,
+      "verdict": "inconclusive"
+    },
+    {
+      "fixture": "real-2",
+      "ground_truth": 0,
+      "jpeg_quality": 95,
+      "ai_score": 0.03667740896344185,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-2",
+      "ground_truth": 0,
+      "jpeg_quality": 60,
+      "ai_score": 0.016885489225387573,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-3",
+      "ground_truth": 0,
+      "jpeg_quality": 95,
+      "ai_score": 0.22211040556430817,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-3",
+      "ground_truth": 0,
+      "jpeg_quality": 60,
+      "ai_score": 0.004901706241071224,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-4",
+      "ground_truth": 0,
+      "jpeg_quality": 95,
+      "ai_score": 0.055933210998773575,
+      "verdict": "real"
+    },
+    {
+      "fixture": "real-4",
+      "ground_truth": 0,
+      "jpeg_quality": 60,
+      "ai_score": 0.04438506439328194,
+      "verdict": "real"
+    },
+    {
+      "fixture": "ai-0",
+      "ground_truth": 1,
+      "jpeg_quality": 95,
+      "ai_score": 0.8672844171524048,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-0",
+      "ground_truth": 1,
+      "jpeg_quality": 60,
+      "ai_score": 0.8485543727874756,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-1",
+      "ground_truth": 1,
+      "jpeg_quality": 95,
+      "ai_score": 0.9870763421058655,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-1",
+      "ground_truth": 1,
+      "jpeg_quality": 60,
+      "ai_score": 0.9852510690689087,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-2",
+      "ground_truth": 1,
+      "jpeg_quality": 95,
+      "ai_score": 0.8929461240768433,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-2",
+      "ground_truth": 1,
+      "jpeg_quality": 60,
+      "ai_score": 0.8767493367195129,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-3",
+      "ground_truth": 1,
+      "jpeg_quality": 95,
+      "ai_score": 0.9788707494735718,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-3",
+      "ground_truth": 1,
+      "jpeg_quality": 60,
+      "ai_score": 0.9800942540168762,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-4",
+      "ground_truth": 1,
+      "jpeg_quality": 95,
+      "ai_score": 0.8404315114021301,
+      "verdict": "fake"
+    },
+    {
+      "fixture": "ai-4",
+      "ground_truth": 1,
+      "jpeg_quality": 60,
+      "ai_score": 0.8424327373504639,
+      "verdict": "fake"
+    }
+  ]
+}

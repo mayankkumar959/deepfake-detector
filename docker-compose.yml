@@ -1,14 +1,17 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        MODEL_DIR: ${FORTEXA_MODEL_DIR:-runs/general-ai-trained-indoor-20261005}
     container_name: fortexa-backend
     ports:
       - "8000:8000"
     environment:
       - APP_ENV=production
       - FRONTEND_ORIGIN=http://localhost:3000
-      # Optional: set a strong secret for production
-      - SECRET_KEY=change-me-fortexa-secret
+      # Required: set SECRET_KEY in your shell or the project-root .env.
+      - SECRET_KEY=${SECRET_KEY:?Set a random SECRET_KEY of at least 32 characters}
     volumes:
       - fortexa_data:/app/data
     restart: unless-stopped
@@ -17,7 +20,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://localhost:8000/api
+        VITE_API_URL: /api
     container_name: fortexa-frontend
     ports:
       - "3000:80"

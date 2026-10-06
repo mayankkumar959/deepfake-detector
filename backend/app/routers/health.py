@@ -31,11 +31,13 @@ def health(db: Session = Depends(get_db)):
         celery_ok = False
 
     return {
-        "status": "ok" if db_ok else "degraded",
+        "status": "ok" if db_ok and ml_status["status"] in ('ml-face-classifier', 'ml-ai-image-classifier') else "degraded",
         "app": settings.APP_NAME,
         "version": "1.0.0",
         "database": "connected" if db_ok else "error",
         "detection_engine": ml_status,
         "background_worker": "celery" if celery_ok else "inline-thread",
         "environment": settings.APP_ENV,
+        "retention_hours": settings.RETENTION_HOURS,
+        "max_video_seconds": settings.MAX_VIDEO_SECONDS,
     }

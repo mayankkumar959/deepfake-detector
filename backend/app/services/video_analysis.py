@@ -9,29 +9,31 @@ Strategy:
 import cv2
 import numpy as np
 
-from .image_analysis import analyze_image
 from .face_utils import detect_faces
+from .frame_analysis import analyze_frame
+from ..config import get_settings
 
 MAX_SAMPLES = 16
 
 
-def _sample_frames(video_path: str, max_samples: int = MAX_SAMPLES) -> list[tuple[float, np.ndarray]]:
+def _sample_frames(video_path: str, max_samples: int = MAX_SAMPLES) -> tuple[list[tuple[float, np.ndarray]], float, float, int]:
     """Return [(timestamp_sec, frame_bgr), ...] sampled evenly."""
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        raise ValueError(f"Unable to open video: {video_path}")
+        raise ValueError("The uploaded video could not be decoded")
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
     fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
     duration = total_frames / fps if fps else 0.0
+    if duration > get_settings().MAX_VIDEO_SECONDS:
+        cap.release()
+        raise ValueError(f"Video exceeds the {get_settings().MAX_VIDEO_SECONDS}-second processing limit")
 
     if total_frames <= 0:
         cap.release()
         return [], duration, fps, 0
 
-    step = max(1, total_frames // max_samples)
-    indices = sorted(set(int(i) for i in np.arange(0, total_frames, step)))
-    indices = indices[:max_samples]
+    indices = np.linspace(0, total_frames - 1, min(max_samples, total_frames), dtype=int).tolist()
 
     frames = []
     for idx in indices:
@@ -80,27 +82,27 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
         raise ValueError("No readable frames found in video")
 
     timeline = []
-    frame_probs = []
     aggregate_signals = {}
+    ml_probs = []
+    warnings = set()
+    max_faces = 0
+    heuristic_probs = []
 
     for ts, frame in frames:
-        faces = detect_faces(frame)
-        # Analyze the largest face region if present, else whole frame
-        if faces:
-            x, y, w, h = max(faces, key=lambda r: r[2] * r[3])
-            region = frame[y:y + h, x:x + w]
-        else:
-            region = frame
+        result = analyze_frame(frame)
+        heuristic_probs.append(result["_heuristic"])
+        max_faces = max(max_faces, result["face_count"])
+        warnings.update(result.get("warnings", []))
+        if result.get("ml_probability") is not None:
+            ml_probs.append(result["ml_probability"])
 
-        result = analyze_image(region, filename=filename)
-
-        # Frame-level ML blend happens in the detector; keep heuristic here
+        # Each timeline entry uses the same classifier as the final aggregate.
         fp = result["fake_probability"]
-        frame_probs.append(fp)
         timeline.append({
             "index": len(timeline),
             "time": round(ts, 2),
             "fake_probability": fp,
+            "classified": result.get("ml_probability") is not None,
             "face_count": result["face_count"],
             "verdict": "fake" if fp >= 0.6 else ("real" if fp <= 0.4 else "inconclusive"),
         })
@@ -117,11 +119,10 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
     flicker = _temporal_flicker_score([f for _, f in frames])
     signals["temporal_flicker"] = round(flicker, 4)
 
-    # Aggregate frame probability (weighted toward high-confidence frames)
-    frame_prob = float(np.mean(frame_probs))
-
-    # Blend flicker into final: flicker high + high fp → strongly fake
-    combined = 0.7 * frame_prob + 0.3 * flicker
+    # Motion, lighting and scene cuts are not calibrated deepfake evidence.
+    combined = float(np.mean(ml_probs)) if ml_probs else 0.5
+    if ml_probs:
+        warnings.add(f"Only {len(ml_probs)} of {len(frames)} sampled frames were classified. Unseen frames and audio were not assessed.")
 
     # Thumbnail: frame with a detected face (or middle frame)
     thumbnail = None
@@ -141,4 +142,9 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
         "fps": round(fps, 2),
         "thumbnail": thumbnail,
         "analyzed_frames": len(frames),
+        "classified_frames": len(ml_probs),
+        "face_count": max_faces,
+        "ml_probability": float(np.mean(ml_probs)) if ml_probs else None,
+        "_heuristic": float(np.mean(heuristic_probs)),
+        "warnings": sorted(warnings),
     }

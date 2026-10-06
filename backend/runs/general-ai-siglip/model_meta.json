@@ -1,0 +1,17 @@
+{
+  "task": "AI-generated versus real image",
+  "source": "https://huggingface.co/Ateeqq/ai-vs-human-image-detector",
+  "source_revision": "60e82406916921b823616bee33397baab38af3f0",
+  "architecture": "SiglipForImageClassification",
+  "training": "Publisher pretrained model: reports 60000 AI and 60000 human images; not locally retrained",
+  "license": "Apache-2.0",
+  "publisher_warning": "Some users reported overfitting issues",
+  "calibrated": false,
+  "local_independent_evaluation": false,
+  "preprocessing": "Publisher SiglipImageProcessor: whole image resized to 224x224, mean/std 0.5, no face crop",
+  "sha256": {
+    "model.safetensors": "ab0b8cad7462a047ff4e2888cb4f11b1abe568d73ce07a2649a3f1541f73675f",
+    "config.json": "4ae0303aff5c84eaeabc3721ccc931a8b2968ed8e1d1a1285159242bf2a36da0",
+    "preprocessor_config.json": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32"
+  }
+}

@@ -1,10 +1,12 @@
 """ML inference engine.
 
-Loads a trained artifact (runs/model.pth + runs/model_meta.json) produced by
-train.py. If no artifact exists or PyTorch is unavailable, every consumer falls
-back to the heuristic detector so the platform stays fully functional.
+Loads model.pth and model_meta.json from RUNS_DIR without downloading weights.
+Missing or failed inference is reported explicitly; consumers return an
+inconclusive result rather than substituting heuristics for a trained model.
 """
 import json
+import logging
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -33,6 +35,8 @@ class MLInference:
         self.arch = meta.get("arch", "resnet18")
         self.input_size = meta.get("input_size", 224)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if self.device == "cpu":
+            torch.set_num_threads(2)
 
         # Lazy import to avoid torch dependency at module load
         from .model import build_model
@@ -71,11 +75,25 @@ class MLInference:
 
 
 _engine: Optional[MLInference] = None
+_load_lock = threading.RLock()
+_load_attempted = False
+_load_error = None
+logger = logging.getLogger(__name__)
 
 
 def load_ml_engine(force: bool = False) -> Optional[MLInference]:
     """Load the trained ML engine once. Returns None if not available."""
-    global _engine
+    global _engine, _load_attempted, _load_error
+    with _load_lock:
+        return _load_ml_engine_locked(force)
+
+
+def _load_ml_engine_locked(force: bool = False) -> Optional[MLInference]:
+    global _engine, _load_attempted, _load_error
+    if _load_attempted and not force:
+        return _engine
+    _load_attempted = True
+    _load_error = None
     if _engine is not None and not force:
         return _engine
     if not _HAS_TORCH:
@@ -94,35 +112,46 @@ def load_ml_engine(force: bool = False) -> Optional[MLInference]:
         with open(meta_path, "r", encoding="utf-8") as fh:
             meta = json.load(fh)
         _engine = MLInference(model_path, meta)
-    except Exception:
+    except Exception as exc:
+        _load_error = str(exc)
+        logger.exception("Unable to load detection model")
         _engine = None
     return _engine
 
 
 def get_ml_status() -> dict:
     """Report detection engine status for health/dashboard endpoints."""
+    if settings.DETECTOR_TASK == 'ai-image':
+        from .general_image import general_status
+        return general_status()
     if not _HAS_TORCH:
         return {
-            "status": "heuristic",
-            "model": "heuristic-forensic-v1",
+            "status": "unavailable",
+            "model": None,
             "torch": False,
-            "message": "PyTorch not installed — using forensic heuristic engine.",
+            "message": "PyTorch is unavailable; facial classification is inconclusive.",
         }
     eng = load_ml_engine()
     if eng is None:
         return {
-            "status": "heuristic",
-            "model": "heuristic-forensic-v1",
+            "status": "unavailable",
+            "model": None,
             "torch": True,
-            "message": "No trained model artifact found in runs/. Train with: python -m app.ml.train",
+            "message": "Model failed to load. Check server logs." if _load_error else "No trained model artifact found in runs/.",
         }
     return {
-        "status": "ml-ensemble",
+        "status": "ml-face-classifier",
         "model": eng.meta.get("arch", "resnet18"),
-        "accuracy": eng.meta.get("val_acc"),
+        "validation_accuracy": eng.meta.get("val_acc"),
+        "test_metrics": eng.meta.get("test_metrics"),
+        "manifest_sha256": eng.meta.get("manifest_sha256"),
+        "selected_epoch": eng.meta.get("selected_epoch"),
+        "evaluation_scope": eng.meta.get("evaluation_scope", "legacy demo data; not independently validated"),
+        "dataset": eng.meta.get("dataset_source", "legacy demo dataset"),
+        "calibrated": eng.meta.get("calibrated", False),
         "torch": True,
         "trained_at": eng.meta.get("trained_at"),
-        "message": f"ML ensemble active using {eng.arch} trained model.",
+        "message": f"Face classifier active using {eng.arch} trained model.",
     }
 
 
@@ -133,5 +162,6 @@ def predict_with_ml(bgr_image: np.ndarray) -> Optional[float]:
         return None
     try:
         return eng.predict_prob(bgr_image)
-    except Exception:
-        return None
+    except Exception as exc:
+        logger.exception("Model prediction failed")
+        raise RuntimeError("Model prediction failed; no verdict was generated.") from exc

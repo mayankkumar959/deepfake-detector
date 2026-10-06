@@ -13,25 +13,23 @@ import numpy as np
 from ..config import get_settings
 from ..database import SessionLocal
 from ..models import ScanRecord
-from ..ml.engine import predict_with_ml, get_ml_status
-from .image_analysis import analyze_image
+from ..ml.engine import get_ml_status
 from .video_analysis import analyze_video
 from .report import build_report
 from .face_utils import detect_faces
+from .frame_analysis import analyze_frame
 from . import storage
 
 settings = get_settings()
 
 
-def _blend_frame_ml(heuristic_prob: float, ml_prob: float | None) -> float:
-    if ml_prob is None:
-        return heuristic_prob
-    return round(0.65 * ml_prob + 0.35 * heuristic_prob, 4)
-
-
 def _make_heatmap(bgr: np.ndarray, analysis: dict) -> np.ndarray:
     """Annotate the image with face boxes + probability labels."""
     img = bgr.copy()
+    if settings.DETECTOR_TASK == 'ai-image':
+        text = 'AI model score: ' + format(analysis['fake_probability'], '.0%') if analysis.get('ml_probability') is not None else 'INCONCLUSIVE'
+        cv2.putText(img, text, (12, 30), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255), 2)
+        return img
     faces = detect_faces(bgr)
     fp = analysis["fake_probability"]
     color = (0, 0, 255) if fp >= 0.6 else ((0, 255, 255) if fp >= 0.4 else (0, 255, 0))
@@ -42,13 +40,13 @@ def _make_heatmap(bgr: np.ndarray, analysis: dict) -> np.ndarray:
         intensity = int(180 * fp)
         overlay[:, :] = (intensity, 0, 0)
         img = cv2.addWeighted(img, 0.7, overlay, 0.3, 0)
-        cv2.putText(img, f"FAKE {fp:.0%}" if fp >= 0.5 else f"REAL {1 - fp:.0%}",
-                    (12, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+        cv2.putText(img, "NO CLEAR FACE", (12, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(img, "INCONCLUSIVE", (12, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         return img
 
     for (x, y, w, h) in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 3)
-        label = f"{fp:.0%} fake" if fp >= 0.4 else f"{1 - fp:.0%} real"
+        label = "INCONCLUSIVE" if 0.4 < fp < 0.6 else f"Fake score: {fp:.0%}"
         cv2.putText(img, label, (x, max(24, y - 8)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
     return img
@@ -74,22 +72,9 @@ def process_scan(scan_id: str):
             bgr = cv2.imread(orig_path)
             if bgr is None:
                 raise ValueError("Could not decode image file")
-            analysis = analyze_image(bgr, filename=scan.filename)
+            analysis = analyze_frame(bgr)
 
-            # ML blend on the full image + face crop
-            ml_prob = predict_with_ml(bgr)
-            if ml_prob is not None:
-                # Preserve the raw heuristic value for the report
-                analysis["_heuristic"] = analysis["fake_probability"]
-                faces = detect_faces(bgr)
-                if faces:
-                    x, y, w, h = max(faces, key=lambda r: r[2] * r[3])
-                    crop = bgr[y:y + h, x:x + w]
-                    crop_prob = predict_with_ml(crop)
-                    if crop_prob is not None:
-                        ml_prob = 0.6 * ml_prob + 0.4 * crop_prob
-                analysis["fake_probability"] = _blend_frame_ml(
-                    analysis["fake_probability"], ml_prob)
+            ml_prob = analysis.get("ml_probability")
 
             # Heatmap artifact
             heatmap = _make_heatmap(bgr, analysis)
@@ -100,20 +85,6 @@ def process_scan(scan_id: str):
         elif media_type == "video":
             analysis = analyze_video(orig_path, filename=scan.filename)
 
-            # ML blend: predict on a small set of sampled frames
-            if analysis.get("timeline"):
-                analysis["_heuristic"] = analysis["fake_probability"]
-                from . import video_analysis as va
-                frames, _, _, _ = va._sample_frames(orig_path, max_samples=8)
-                ml_probs = []
-                for _, frame in frames:
-                    mp = predict_with_ml(frame)
-                    if mp is not None:
-                        ml_probs.append(mp)
-                if ml_probs:
-                    ml_prob = float(np.mean(ml_probs))
-                    analysis["fake_probability"] = _blend_frame_ml(
-                        analysis["fake_probability"], ml_prob)
 
             # Thumbnail artifact
             thumb = analysis.get("thumbnail")
@@ -124,8 +95,10 @@ def process_scan(scan_id: str):
         else:
             raise ValueError(f"Unsupported media type: {media_type}")
 
+        if media_type == "video":
+            ml_prob = analysis.get("ml_probability")
         ml_status = get_ml_status()
-        method = "ml-ensemble" if ml_status["status"] == "ml-ensemble" else "forensic-heuristic"
+        method = ml_status['status'] if ml_prob is not None else "inconclusive-forensic-only"
         model_used = ml_status.get("model", "heuristic-forensic-v1")
 
         report = build_report(

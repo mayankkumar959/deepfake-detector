@@ -1,0 +1,14 @@
+{
+  "purpose": "Small integration/robustness fixtures only; not a representative accuracy benchmark or training set",
+  "ai-0.jpg through ai-4.jpg": {
+    "label": 1,
+    "source": "https://huggingface.co/datasets/svjack/diffusiondb_random_10k",
+    "origin": "DiffusionDB Stable Diffusion generations; first five train rows from dataset viewer"
+  },
+  "real-0.jpg through real-4.jpg": {
+    "label": 0,
+    "source": "https://huggingface.co/datasets/Multimodal-Fatima/Imagenette_validation",
+    "origin": "Imagenette real ImageNet photographs; first five validation rows from dataset viewer"
+  },
+  "compression": "JPEG quality 60 is a simulation, not a reproduction of WhatsApp's pipeline. Labels are unchanged."
+}

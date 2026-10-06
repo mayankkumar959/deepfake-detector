@@ -1,0 +1,47 @@
+{
+  "source": "https://huggingface.co/Ateeqq/ai-vs-human-image-detector",
+  "source_revision": "60e82406916921b823616bee33397baab38af3f0",
+  "task": "AI-generated vs real; compression preserves labels",
+  "training": "Locally trained new binary head, frozen SigLIP encoder, both-class JPEG augmentation",
+  "manifest_sha256": "771511d14fd73f976c6baca0895fb316c2ea6b88d03ff55a973fc8fd25db5d03",
+  "calibrated": false,
+  "evaluation_scope": "Small single-generator dataset; real mirror/AI mirror source separation may introduce dataset bias. Not a representative benchmark.",
+  "selected_C": 0.01,
+  "test_metrics": {
+    "samples": 41,
+    "accuracy": 0.8292682926829268,
+    "roc_auc": 0.9512820512820513,
+    "precision": 0.7,
+    "recall": 0.9333333333333333,
+    "f1": 0.8,
+    "confusion_matrix": [
+      [
+        20,
+        6
+      ],
+      [
+        1,
+        14
+      ]
+    ]
+  },
+  "split_counts": {
+    "train": [
+      215,
+      64
+    ],
+    "val": [
+      26,
+      16
+    ],
+    "test": [
+      26,
+      15
+    ]
+  },
+  "sha256": {
+    "model.safetensors": "ef46ab15e8e1dbbc5c24307a75c440c2d0d423574d9ac67a3e16851c03e0a613",
+    "config.json": "7c579d474c5efaa73bb24dcc062cd6efc9e595b4d98724e4dd785e5bd1628a61",
+    "preprocessor_config.json": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32"
+  }
+}

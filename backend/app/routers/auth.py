@@ -36,7 +36,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         username=username,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
-        role="admin" if is_first else "user",
+        role="user",
     )
     db.add(user)
     db.commit()
@@ -54,6 +54,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account deactivated")
+    if user.role == "admin" and verify_password("Admin@12345", user.hashed_password):
+        raise HTTPException(status_code=403, detail="Default admin credentials are disabled. Configure a strong admin password on the server.")
 
     token = create_access_token(user.id, user.email, user.role)
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))

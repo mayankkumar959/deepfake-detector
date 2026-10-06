@@ -9,9 +9,9 @@ Computes several tampering signals on an image:
   6. METADATA   — EXIF edit-software fingerprint
 
 Each signal returns score in [0, 1] where HIGHER = MORE LIKELY FAKE.
-Signals are combined with a weighted model to produce an overall fake
-probability. This engine works with zero ML weights and is used as the
-baseline; when a trained model exists, ML output is blended on top.
+Signals are combined into a diagnostic heuristic score only. These signals
+do not determine or blend with the product's ML classification. Missing-model
+or no-face scans remain inconclusive in the shared frame-analysis pipeline.
 """
 import io
 
@@ -249,13 +249,7 @@ EDIT_SOFTWARE_MARKERS = [
 
 def _metadata_score(filename: str | None) -> float:
     """Inspect filename for editing-software fingerprints."""
-    if not filename:
-        return 0.0
-    low = filename.lower()
-    if any(m in low for m in EDIT_SOFTWARE_MARKERS):
-        return 0.7
-    if low.startswith(("deepfake", "edit", "screenshot_", "cam_scan")):
-        return 0.6
+    # A filename is not evidence of manipulation. EXIF is not analyzed here.
     return 0.0
 
 
@@ -279,7 +273,6 @@ def analyze_image(bgr: np.ndarray, filename: str | None = None) -> dict:
         "noise": round(noise, 4),
         "boundary": round(boundary, 4),
         "color": round(color, 4),
-        "metadata": round(meta, 4),
     }
 
     weighted = (
@@ -297,5 +290,3 @@ def analyze_image(bgr: np.ndarray, filename: str | None = None) -> dict:
         "fake_probability": round(float(np.clip(weighted, 0.0, 1.0)), 4),
         "face_count": len(faces),
     }
-
-

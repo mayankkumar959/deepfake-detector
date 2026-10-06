@@ -4,6 +4,7 @@ import Results from './pages/Results'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import NotFound from './pages/NotFound'
+import ScanHistory from './pages/ScanHistory'
 import { ToastProvider } from './components/ui/Toast'
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/" element={<Scanner />} />
         <Route path="/scan" element={<Scanner />} />
         <Route path="/results/:id" element={<Results />} />
+        <Route path="/history" element={<ScanHistory />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<NotFound />} />

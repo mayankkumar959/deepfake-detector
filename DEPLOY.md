@@ -1,74 +1,57 @@
-# Fortexa — Deployment Guide
+# Fortexa deployment
 
-## Architecture
+The application is experimental: deployment does not establish detector accuracy.
+Read GENERAL_AI_STATUS.md before submission or publication. Supply the general
+locally trained SigLIP artifacts verified by setup-general-ai.ps1 before building.
+Upstream downloads cannot restore the local trained head.
 
-```
-Browser
-  │
-  ├── Frontend (React/Vite static) ──→ Vercel (free, CDN)
-  └── API calls (/api/*) ──────────→ Backend (FastAPI + PyTorch) ──→ Render (Docker)
-```
+## Local Docker
 
----
+From the project root, set a persistent random secret in your shell or root
+`.env`. Never commit that file or use the example placeholder.
 
-## Step 1: Push code to GitHub
-
-```bash
-cd "Final year project/deepfake"
-git init && git add . && git commit -m "Fortexa launch"
-git remote add origin https://github.com/<username>/fortexa.git
-git push -u origin main
-```
-
-> `.gitignore` me `node_modules`, `data/source_faces`, `data/demo_dataset`,
-> `backend/fortexa.db` add karna (model `runs/model.pth` push karo — 43MB, zaroori hai).
-
-## Step 2: Deploy backend on Render (free)
-
-1. https://dashboard.render.com → **New +** → **Blueprint**
-2. Repo select karo — `render.yaml` auto-detect hoga
-3. Env var set karo jab puche:
-   - `FRONTEND_ORIGIN` = abhi `https://placeholder.vercel.app` daal do (baad me update)
-4. Deploy ~5-8 min (torch install hota hai)
-5. Milega URL jaise: `https://fortexa-backend.onrender.com`
-6. Test: `https://fortexa-backend.onrender.com/api/health` → `"status": "ok"`
-
-## Step 3: Deploy frontend on Vercel (free)
-
-1. https://vercel.com → **Add New Project** → repo import karo
-2. Settings:
-   - **Root Directory**: `deepfake/frontend` (ya jahan frontend hai)
-   - **Environment variable**:
-     - `VITE_API_URL` = `https://fortexa-backend.onrender.com/api`
-3. Deploy → milega `https://fortexa-xxx.vercel.app`
-
-## Step 4: CORS fix (zaroori!)
-
-Render dashboard → fortexa-backend → Environment:
-- `FRONTEND_ORIGIN` = `https://fortexa-xxx.vercel.app`
-- Save → auto redeploy
-
-Done. Ab live website ready.
-
----
-
-## Local Docker (optional — Docker Desktop install karke)
-
-```bash
-cd deepfake
+```powershell
+$env:SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
+docker compose config --quiet
 docker compose up --build
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000/docs
+Frontend: http://localhost:3000. API: http://localhost:8000/api/health.
+The frontend uses same-origin `/api` requests proxied by nginx to the backend.
+SQLite and uploads are stored on the named `fortexa_data` volume. Keep the secret
+stable across restarts so signed media URLs remain valid. Removing the volume
+removes persisted data; do not run volume-deletion commands casually.
 
----
+Docker execution has not been tested here because Docker is unavailable.
 
-## Important notes
+## Separate hosted frontend/backend
 
-| Cheez | Detail |
-|-------|--------|
-| Cold start | Free Render 15 min idle ke baad sleep — pehli request ~50s leti hai |
-| Persistence | Free tier pe DB/uploads redeploy pe reset. Paid ($7/mo) me `render.yaml` me disk uncomment karo |
-| Model | `runs/model.pth` image ke andar baked hai — alag se upload nahi karna |
-| Video scans | Free tier RAM 512MB — lambi videos fail ho sakti hain, chhoti test video use karo |
+The repository includes render.yaml for a Docker backend and frontend/vercel.json
+for SPA routes. Configure paths relative to the repository root:
+
+- Backend Dockerfile: backend/Dockerfile; Docker context: backend.
+- Backend SECRET_KEY: a persistent random value of at least 32 characters.
+- Backend FRONTEND_ORIGIN: the exact deployed frontend origin.
+- Frontend root: frontend; build: npm run build; output: dist.
+- Frontend VITE_API_URL: the deployed backend URL ending in /api, set before build.
+
+Check backend /api/health, then uploads, private history, media and deletion in
+an actual browser. Configure persistent storage at /app/data for database and
+uploads; without persistent storage these can be lost on service replacement.
+Select resources based on measured PyTorch/video memory usage, not an assumed
+free-tier capacity. No hosted deployment has been performed by this task.
+
+Before a Docker build, choose the evaluated checkpoint directory explicitly:
+
+```powershell
+$env:FORTEXA_MODEL_DIR = 'runs/general-ai-trained-indoor-20261005'
+docker compose up --build
+```
+
+The directory must contain model.safetensors, config.json,
+preprocessor_config.json and model_meta.json inside backend. Compose defaults to
+the trained indoor model; Docker copies it to /app/runs/active matching RUNS_DIR.
+Hosted builds need these binary artifacts supplied in their build context too.
+The active trained weight uses Git LFS. Ensure git lfs pull completes before a
+Docker build: a small LFS pointer is not a usable model. Inactive weights and raw
+training data are not included in the current source tree.

@@ -1,5 +1,7 @@
 """Build the final structured scan report from analysis results."""
 from datetime import datetime, timezone
+from .image_analysis import SIGNAL_WEIGHTS
+from ..ml.engine import get_ml_status
 
 SIGNAL_LABELS = {
     "ela": ("Error Level Analysis", "Detects re-compression / tampering artifacts via JPEG error-level analysis."),
@@ -41,16 +43,10 @@ def _summary(prob: float, media_type: str, face_count: int, method: str) -> str:
     unit = "image" if media_type == "image" else "video"
 
     if verdict == "fake":
-        if prob >= 0.8:
-            return (f"High-confidence indication of manipulated media. Multiple forensic signals "
-                    f"point to synthetic generation or tampering ({int(prob * 100)}% fake probability).")
-        return (f"Forensic signals suggest this {unit} may have been manipulated "
-                f"({int(prob * 100)}% fake probability). Manual review recommended.")
+        return f"The classifier favors the AI-generated class for this {unit} (AI model score {prob:.0%}). This score is not calibrated confidence; review the limitations and original media."
     if verdict == "real":
-        return (f"No significant tampering artifacts detected. This {unit} appears consistent with "
-                f"authentic capture ({int((1 - prob) * 100)}% real probability).")
-    return (f"Results are inconclusive. Signals do not strongly favor either class "
-            f"({int(prob * 100)}% fake). Review the signal breakdown for details.")
+        return f"The classifier favors the real-photo class for this {unit} (AI model score {prob:.0%}). This does not prove camera origin or exclude other forms of editing."
+    return "Classification is inconclusive. The score does not clearly favor either class; review the original media and report limitations."
 
 
 def build_report(
@@ -64,17 +60,16 @@ def build_report(
     """Assemble the complete report JSON persisted with the scan."""
     now = datetime.now(timezone.utc).isoformat()
 
-    # Heuristic probability (pre-blend value recorded by the detector)
+    # Heuristics are separate diagnostics and never determine the ML verdict.
     heuristic_prob = analysis.get("_heuristic", analysis["fake_probability"])
 
-    # analysis["fake_probability"] is ALREADY the final blended probability —
-    # the detector blends ML into it before calling build_report.
+    # The analysis stores the classifier score, or 0.5 when inconclusive.
     fake_prob = analysis["fake_probability"]
 
     verdict = verdict_for(fake_prob)
     level, level_label = risk_for(fake_prob)
     real_prob = round(1 - fake_prob, 4)
-    confidence = round(max(fake_prob, real_prob), 4)
+    confidence = None  # A model score is not calibrated confidence.
 
     # Build readable signal list
     signals_out = []
@@ -86,11 +81,7 @@ def build_report(
             "description": desc,
             "score": round(float(score), 4),
             "status": "suspicious" if score >= 0.6 else ("normal" if score <= 0.4 else "neutral"),
-            "weight": round(
-                (0.25 if key == "ela" else 0.15 if key == "frequency"
-                 else 0.20 if key in ("noise", "boundary")
-                 else 0.12 if key == "color"
-                 else 0.10), 2),
+            "weight": SIGNAL_WEIGHTS.get(key, 0.0),
         })
 
     report = {
@@ -102,6 +93,7 @@ def build_report(
         "confidence": confidence,
         "method": method,
         "model_used": model_used,
+        "model_evaluation": get_ml_status(),
         "media_type": media_type,
         "filename": filename,
         "signals": signals_out,
@@ -114,5 +106,18 @@ def build_report(
         "timeline": analysis.get("timeline"),
         "heuristic_probability": heuristic_prob,
         "ml_probability": ml_probability,
+        "warnings": analysis.get("warnings", []),
+        "score_type": "model_score_not_calibrated_probability",
+        "classification_policy": {
+            "fake": "AI-generated origin",
+            "real": "Real-photo origin",
+            "compression_changes_ground_truth": False,
+            "diagnostics_determine_verdict": False,
+        },
+        "classified_frames": analysis.get("classified_frames"),
+        "annotation_type": ('ai_score_overlay' if method == 'ml-ai-image-classifier' else 'face_detection_overlay') if media_type == 'image' else 'sampled_frame_thumbnail',
     }
+    if analysis.get("warnings") and (ml_probability is None):
+        report["summary"] = "Classification is inconclusive. " + " ".join(analysis["warnings"])
+        report["risk_label"] = "Undetermined"
     return report

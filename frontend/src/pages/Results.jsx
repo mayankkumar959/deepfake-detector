@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, Clock, Activity, Camera, Video, AlertTriangle,
-  FileText, Flame, BarChart3, Zap,
+  ArrowLeft, Clock, Camera, Video, AlertTriangle,
+  FileText, Flame, Zap,
 } from 'lucide-react'
-import api from '../api/client'
+import api, { mediaUrl as scanMediaUrl, downloadReport, handleError } from '../api/client'
 import Gauge from '../components/ui/Gauge'
 import VerdictBadge from '../components/ui/VerdictBadge'
 import Spinner from '../components/ui/Spinner'
-import { useToast } from '../components/ui/Toast'
+import VideoTimeline from '../components/ui/VideoTimeline'
+import ScanNotes from '../components/ui/ScanNotes'
 
 const signalColors = {
   suspicious: 'text-red-400',
@@ -18,44 +19,49 @@ const signalColors = {
 
 export default function Results() {
   const { id } = useParams()
-  const toast = useToast()
   const [scan, setScan] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [polling, setPolling] = useState(false)
-  const pollRef = useRef(null)
-
-  const fetchScan = async () => {
-    try {
-      const { data } = await api.get(`/scans/${id}`)
-      setScan(data)
-      if (data.status === 'pending' || data.status === 'processing') {
-        setPolling(true)
-        if (!pollRef.current) {
-          pollRef.current = setInterval(fetchScan, 2000)
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    let timer
+    const deadline = Date.now() + 10 * 60 * 1000
+    setScan(null)
+    setError('')
+    setLoading(true)
+    async function fetchScan() {
+      try {
+        const { data } = await api.get(`/scans/${id}`, { signal: controller.signal })
+        if (controller.signal.aborted) return
+        setScan(data)
+        setLoading(false)
+        if (['pending', 'processing'].includes(data.status)) {
+          if (Date.now() > deadline) setError('Processing is taking longer than expected. Retry to check again.')
+          else timer = setTimeout(fetchScan, 2000)
         }
-      } else {
-        setPolling(false)
-        if (pollRef.current) {
-          clearInterval(pollRef.current)
-          pollRef.current = null
-        }
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setError(err.response?.status === 404 ? 'This scan was deleted, expired, or belongs to another browser session.' : handleError(err))
+        setLoading(false)
       }
-    } catch (err) {
-      toast.error('Failed to load scan.')
-      setLoading(false)
     }
-  }
-
-  useEffect(() => {
     fetchScan()
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current)
-    }
-  }, [id])
-
-  useEffect(() => {
-    if (scan) setLoading(false)
-  }, [scan])
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [id, retry])
+  if (error) {
+    return (
+      <main className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
+        <AlertTriangle size={36} className="text-amber-300" />
+        <h1 className="text-2xl font-bold">Report unavailable</h1>
+        <p role="alert" className="text-fortexa-muted">{error}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <button className="btn-secondary" onClick={() => setRetry(value => value + 1)}>Retry</button>
+          <Link to="/history" className="btn-primary">Your Scans</Link>
+        </div>
+      </main>
+    )
+  }
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -79,7 +85,6 @@ export default function Results() {
       <div className="flex flex-col items-center py-24">
         <Spinner size={32} />
         <p className="mt-4 text-lg font-semibold">Scan in progress…</p>
-        <p className="mt-1 text-sm text-fortexa-muted">Running forensic analysis. This may take a few seconds.</p>
       </div>
     )
   }
@@ -98,10 +103,10 @@ export default function Results() {
   const report = scan.report
   const signals = report?.signals || []
   const isVideo = scan.media_type === 'video'
-  const mediaUrl = () => `/api/scans/${scan.id}/media/${scan.filename}`
+  const mediaUrl = () => scanMediaUrl(scan)
 
   return (
-    <div className="animate-fade-in">
+    <div className="mx-auto max-w-7xl animate-fade-in px-4 py-10 lg:px-8">
       {/* Back */}
       <Link to="/" className="mb-4 inline-flex items-center gap-1.5 text-sm text-fortexa-muted hover:text-white">
         <ArrowLeft size={16} /> Scan New Media
@@ -125,21 +130,18 @@ export default function Results() {
             <span className="flex items-center gap-1.5">
               <Clock size={14} /> {scan.duration_ms ? `${scan.duration_ms}ms` : '—'}
             </span>
-            <span className="flex items-center gap-1.5">
-              <Activity size={14} /> {scan.method}
-            </span>
           </div>
         </div>
+        <button className="btn-secondary" onClick={() => downloadReport(scan)}>Download Report</button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: Gauge + media + heatmap */}
         <div className="space-y-6">
           <div className="card flex flex-col items-center">
-            <Gauge value={scan.fake_probability || 0} size={180} />
+            {report?.ml_probability != null ? <Gauge value={scan.fake_probability || 0} size={180} /> : <p className="text-sm text-fortexa-muted">No reliable score available</p>}
             <div className="mt-4 text-center">
-              <p className="text-sm font-medium">{report?.risk_label || '—'} Risk</p>
-              <p className="text-xs text-fortexa-muted">Confidence: {Math.round((scan.confidence || 0) * 100)}%</p>
+              <p className="text-xs text-fortexa-muted">AI model score · not confidence</p>
             </div>
           </div>
 
@@ -150,40 +152,35 @@ export default function Results() {
               <img src={mediaUrl()} alt="Scan" className="w-full h-48 object-cover bg-black" />
             )}
             <div className="p-4 text-xs text-fortexa-muted">
-              {isVideo ? 'Original video' : 'Original image'} ({scan.filename})
+              {isVideo ? 'Original video' : 'Original image'}
             </div>
           </div>
 
-          <div className="card">
-            <h3 className="mb-3 text-sm font-semibold flex items-center gap-2">
-              <Flame size={16} className="text-fortexa-primary" /> Heatmap
-            </h3>
+          <details className="card">
+            <summary className="cursor-pointer text-sm font-semibold">
+              <Flame size={16} className="text-fortexa-primary" /> {isVideo ? 'Sampled Frame' : 'Score Annotation'}
+            </summary>
             <img
-              src={`/api/scans/${scan.id}/media/heatmap.jpg`}
-              alt="Heatmap"
-              className="w-full rounded-xl border border-white/10"
+              src={scanMediaUrl(scan, isVideo ? 'thumbnail.jpg' : 'heatmap.jpg')}
+              alt={isVideo ? 'Sampled frame' : 'Score annotation'}
+              className="mt-3 w-full rounded-xl border border-white/10"
               onError={(e) => { e.target.style.display = 'none' }}
             />
-            <p className="mt-2 text-xs text-fortexa-muted">Face detection overlay with probability annotation.</p>
-          </div>
+            <p className="mt-2 text-xs text-fortexa-muted">{isVideo ? 'A sampled frame from the video.' : 'Score overlay only; not a manipulation map.'}</p>
+          </details>
         </div>
         {/* Right: Signals + details */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Summary */}
-          {report?.summary && (
-            <div className="card">
-              <h3 className="mb-3 text-sm font-semibold">Analysis Summary</h3>
-              <p className="text-sm leading-relaxed text-fortexa-muted">{report.summary}</p>
-            </div>
-          )}
+          <ScanNotes warnings={report?.warnings} isVideo={isVideo} />
 
           {/* Signal bars */}
           {signals.length > 0 && (
-            <div className="card">
-              <h3 className="mb-4 text-sm font-semibold flex items-center gap-2">
-                <BarChart3 size={16} className="text-fortexa-primary" /> Per-Signal Breakdown
-              </h3>
-              <div className="space-y-4">
+            <details className="card">
+              <summary className="cursor-pointer text-sm font-semibold">
+                Diagnostic signals
+              </summary>
+              <p className="mt-3 text-xs text-fortexa-muted">Supporting diagnostics, not proof of AI generation.</p>
+              <div className="mt-4 space-y-4">
                 {signals.map((s) => (
                   <div key={s.key}>
                     <div className="mb-1 flex items-center justify-between text-sm">
@@ -205,11 +202,10 @@ export default function Results() {
                         }}
                       />
                     </div>
-                    <p className="mt-1 text-xs text-fortexa-muted/70">{s.description}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
           )}
 
           {/* Video timeline */}
@@ -218,58 +214,32 @@ export default function Results() {
               <h3 className="mb-4 text-sm font-semibold flex items-center gap-2">
                 <Zap size={16} className="text-fortexa-primary" /> Frame Timeline
               </h3>
-              <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
-                {report.timeline.map((t, i) => (
-                  <div
-                    key={i}
-                    className="flex shrink-0 flex-col items-center gap-1"
-                    title={`Frame ${t.frame}: ${Math.round(t.score * 100)}%`}
-                  >
-                    <div
-                      className="w-10 h-20 rounded-lg border border-white/10"
-                      style={{
-                        background: t.score >= 0.6
-                          ? `rgba(239, 68, 68, ${t.score})`
-                          : t.score <= 0.4
-                            ? `rgba(34, 197, 94, ${1 - t.score})`
-                            : `rgba(245, 158, 11, ${t.score})`,
-                      }}
-                    />
-                    <span className="text-[10px] text-fortexa-muted">{t.frame}</span>
-                  </div>
-                ))}
-              </div>
+              <VideoTimeline entries={report.timeline} />
               <p className="mt-2 text-xs text-fortexa-muted">
-                Each bar represents a sampled frame. Red indicates higher fake probability, green indicates authentic.
+                Each bar is a sampled frame. Red/green show the model preference; grey means no classification was possible.
               </p>
             </div>
           )}
 
-          {/* Details */}
-          <div className="card">
-            <h3 className="mb-3 text-sm font-semibold">Detection Details</h3>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <details className="card">
+            <summary className="cursor-pointer text-sm font-semibold">Technical details</summary>
+            <dl className="mt-3 space-y-2 text-sm">
               {[
-                ['Verdict', scan.verdict],
-                ['Fake Probability', `${Math.round((scan.fake_probability || 0) * 100)}%`],
-                ['Real Probability', `${Math.round((scan.real_probability || 0) * 100)}%`],
-                ['Confidence', `${Math.round((scan.confidence || 0) * 100)}%`],
-                ['Risk Level', report?.risk_label || '—'],
-                ['Method', scan.method],
                 ['Model', scan.model_used],
-                ['Duration', scan.duration_ms ? `${scan.duration_ms}ms` : '—'],
-                ['Face Count', report?.face_count ?? '—'],
-                ['Frame Count', report?.frame_count ?? '—'],
-                ['Analyzed Frames', report?.analyzed_frames ?? '—'],
-                ['Duration (sec)', report?.duration_seconds ?? '—'],
+                ['Method', scan.method],
+                ['Analysis time', scan.duration_ms ? `${(scan.duration_ms / 1000).toFixed(1)}s` : '—'],
+                ...(isVideo ? [
+                  ['Frames sampled', report?.analyzed_frames ?? '—'],
+                  ['Video length', report?.duration_seconds != null ? `${report.duration_seconds}s` : '—'],
+                ] : []),
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between border-b border-white/5 py-1.5">
-                  <span className="text-fortexa-muted">{label}</span>
-                  <span className="font-medium">{value}</span>
+                <div key={label} className="flex flex-wrap justify-between gap-2 border-b border-white/5 py-1.5">
+                  <dt className="text-fortexa-muted">{label}</dt>
+                  <dd className="break-all font-medium">{value || '—'}</dd>
                 </div>
               ))}
-            </div>
-          </div>
+            </dl>
+          </details>
         </div>
       </div>
     </div>
