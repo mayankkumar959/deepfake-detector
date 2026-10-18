@@ -56,6 +56,7 @@ def build_report(
     ml_probability: float | None,
     method: str,
     model_used: str,
+    model_evaluation: dict | None = None,
 ) -> dict:
     """Assemble the complete report JSON persisted with the scan."""
     now = datetime.now(timezone.utc).isoformat()
@@ -93,7 +94,7 @@ def build_report(
         "confidence": confidence,
         "method": method,
         "model_used": model_used,
-        "model_evaluation": get_ml_status(),
+        "model_evaluation": model_evaluation or get_ml_status(),
         "media_type": media_type,
         "filename": filename,
         "signals": signals_out,

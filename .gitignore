@@ -29,6 +29,7 @@ backend/runs/*.db
 data/source_faces/
 data/demo_dataset/
 backend/data/archives/
+backend/data/new-datasets/
 backend/data/genuine_dff/*
 !backend/data/genuine_dff/manifest.json
 backend/data/source_faces/
@@ -46,7 +47,11 @@ backend/data/general-ai-fixtures/*.jpg
 !backend/data/general-ai-fixtures/ai-*.jpg
 !backend/data/general-ai-fixtures/real-*.jpg
 backend/data/general-ai-training*/
+backend/data/video-training*/
+backend/data/demo-samples/
 backend/runs/general-ai*/model.safetensors
+backend/runs/active-image-video-*/model.safetensors
+backend/runs/active-demo-v2/
 !backend/runs/general-ai-trained-indoor-20261005/model.safetensors
 .DS_Store
 Thumbs.db

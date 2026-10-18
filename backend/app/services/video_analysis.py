@@ -96,7 +96,8 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
         if result.get("ml_probability") is not None:
             ml_probs.append(result["ml_probability"])
 
-        # Each timeline entry uses the same classifier as the final aggregate.
+        # Timeline entries are the per-frame image-model view; the overall score
+        # may come from the trained temporal head below.
         fp = result["fake_probability"]
         timeline.append({
             "index": len(timeline),
@@ -120,9 +121,26 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
     signals["temporal_flicker"] = round(flicker, 4)
 
     # Motion, lighting and scene cuts are not calibrated deepfake evidence.
-    combined = float(np.mean(ml_probs)) if ml_probs else 0.5
-    if ml_probs:
+    frame_probability = float(np.mean(ml_probs)) if ml_probs else 0.5
+    combined = frame_probability
+    if len(ml_probs) < len(frames):
         warnings.add(f"Only {len(ml_probs)} of {len(frames)} sampled frames were classified. Unseen frames and audio were not assessed.")
+
+    # Prefer the trained temporal video head for the overall verdict. The
+    # timeline above remains the per-frame image-model view used by the UI.
+    from ..ml.general_video import predict_video
+    video_model = predict_video(video_path)
+    if video_model.get("used"):
+        combined = float(video_model["score"])
+        warnings.add("Overall video score uses the trained temporal video head "
+                     "(six frames from the centred two-second window). The timeline "
+                     "shows per-frame image-model scores from evenly spaced frames.")
+        warnings.add("The video head is visual-only: audio and audio/video "
+                     "synchronisation were not assessed.")
+    else:
+        warnings.add("Trained video head unavailable or clip unsupported "
+                     f"({video_model.get('reason', 'unknown reason')}); the overall "
+                     "score falls back to per-frame image-model results.")
 
     # Thumbnail: frame with a detected face (or middle frame)
     thumbnail = None
@@ -144,7 +162,9 @@ def analyze_video(video_path: str, filename: str | None = None) -> dict:
         "analyzed_frames": len(frames),
         "classified_frames": len(ml_probs),
         "face_count": max_faces,
-        "ml_probability": float(np.mean(ml_probs)) if ml_probs else None,
+        "ml_probability": combined if (video_model.get("used") or ml_probs) else None,
+        "frame_ml_probability": float(np.mean(ml_probs)) if ml_probs else None,
+        "video_model": video_model,
         "_heuristic": float(np.mean(heuristic_probs)),
         "warnings": sorted(warnings),
     }

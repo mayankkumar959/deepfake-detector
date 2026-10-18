@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       args:
-        MODEL_DIR: ${FORTEXA_MODEL_DIR:-runs/general-ai-trained-indoor-20261005}
+        MODEL_DIR: ${FORTEXA_MODEL_DIR:-runs/active-image-video-20261018}
     container_name: fortexa-backend
     ports:
       - "8000:8000"

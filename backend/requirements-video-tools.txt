@@ -1,0 +1,2 @@
+# Optional local research verification only; not required by the live backend.
+imageio-ffmpeg==0.6.0

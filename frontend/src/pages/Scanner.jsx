@@ -21,14 +21,14 @@ const sectionLinks = [
 ]
 const features = [
   { icon: ImageIcon, title: 'Image detection', text: 'Check photos of people, objects and scenes.' },
-  { icon: Film, title: 'Video checks', text: 'Analyze sampled frames. Video detection is experimental.' },
+  { icon: Film, title: 'Video checks', text: 'Trained visual temporal head on six centred frames, plus a per-frame timeline. Audio is not analyzed.' },
   { icon: FileText, title: 'Downloadable reports', text: 'Save your results as a report.' },
   { icon: Lock, title: 'Private history', text: 'View and manage scans from this browser.' },
 ]
 const faqs = [
   ['What does it detect?', 'AI-generated versus real photos—not every kind of Photoshop edit. A face is not required.'],
   ['Does WhatsApp compression make a photo fake?', 'No. Compression does not change whether an image was originally real or AI-generated.'],
-  ['Can I scan videos?', 'Yes, using sampled frames. Audio and motion are not analyzed.'],
+  ['Can I scan videos?', 'Yes — a trained visual head scores six centred frames, and the timeline shows per-frame image scores. Audio and lip-sync consistency are not analyzed.'],
   ['Are the results guaranteed?', 'No. The model can make mistakes, especially on unfamiliar AI generators.'],
   ['Where are my scans?', 'Open Your Scans in the same browser. Scans expire automatically, or you can delete them sooner.'],
 ]
@@ -262,7 +262,7 @@ export default function Scanner() {
               </div>
             </div>
           )}
-          <ScanNotes evaluation={health?.detection_engine} retentionHours={health?.retention_hours || 24} />
+          <ScanNotes evaluation={health?.detection_engine} videoEvaluation={health?.video_detection_engine} retentionHours={health?.retention_hours || 24} />
         </main>
       )}
 

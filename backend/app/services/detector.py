@@ -95,11 +95,24 @@ def process_scan(scan_id: str):
         else:
             raise ValueError(f"Unsupported media type: {media_type}")
 
+        model_evaluation = None
         if media_type == "video":
             ml_prob = analysis.get("ml_probability")
-        ml_status = get_ml_status()
-        method = ml_status['status'] if ml_prob is not None else "inconclusive-forensic-only"
-        model_used = ml_status.get("model", "heuristic-forensic-v1")
+            video_model = analysis.get("video_model") or {}
+            if video_model.get("used"):
+                method = "ml-ai-video-classifier"
+                model_used = video_model.get("model") or "SigLIP-Video"
+                model_evaluation = video_model.get("status")
+            else:
+                ml_status = get_ml_status()
+                method = ml_status['status'] if ml_prob is not None else "inconclusive-forensic-only"
+                model_used = ml_status.get("model", "heuristic-forensic-v1")
+                model_evaluation = ml_status
+        if media_type == "image":
+            ml_status = get_ml_status()
+            method = ml_status['status'] if ml_prob is not None else "inconclusive-forensic-only"
+            model_used = ml_status.get("model", "heuristic-forensic-v1")
+            model_evaluation = ml_status
 
         report = build_report(
             media_type=media_type,
@@ -108,6 +121,7 @@ def process_scan(scan_id: str):
             ml_probability=ml_prob,
             method=method,
             model_used=model_used,
+            model_evaluation=model_evaluation,
         )
 
         # Persist report.json alongside media artifacts

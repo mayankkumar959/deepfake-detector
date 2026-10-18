@@ -1,0 +1,140 @@
+{
+  "created_at_unix": 1792315631.5888996,
+  "purpose": "Local image+video deployment package; no cloud upload performed",
+  "model.safetensors_sha256": "df206fd941448042737719822ca25808ace82df65e3f1ad131d1bbcd8ac34af3",
+  "video_head.joblib_sha256": "c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d",
+  "image_test_metrics": {
+    "accuracy": 0.7950138504155124,
+    "accuracy_wilson_95_interval": [
+      0.7640422772211998,
+      0.8228626342636199
+    ],
+    "balanced_accuracy": 0.7405752308207177,
+    "roc_auc": 0.8080398448727287,
+    "confusion_matrix_real_fake": [
+      [
+        53,
+        26
+      ],
+      [
+        122,
+        521
+      ]
+    ],
+    "inconclusive_0.4_to_0.6": 54,
+    "decision_counts_0.4_0.6": {
+      "real": 147,
+      "fake": 521
+    },
+    "false_fake_decisions": 25,
+    "false_real_decisions": 97,
+    "images": 722,
+    "source_scene_groups": 700,
+    "note": "Sampled source-scene experiment; dependent generated variants are not independent scenes. Scores are uncalibrated.",
+    "samples": 722
+  },
+  "video_test_metrics": {
+    "clean": {
+      "accuracy": 0.8694158075601375,
+      "accuracy_wilson_95_interval": [
+        0.8258415254092278,
+        0.9033635799761724
+      ],
+      "balanced_accuracy": 0.8657164291072768,
+      "roc_auc": 0.9192610652663166,
+      "confusion_matrix_real_fake": [
+        [
+          37,
+          6
+        ],
+        [
+          32,
+          216
+        ]
+      ],
+      "inconclusive_0.4_to_0.6": 38,
+      "decision_counts_0.4_0.6": {
+        "real": 49,
+        "fake": 204
+      },
+      "false_fake_decisions": 5,
+      "false_real_decisions": 19,
+      "examples": 291,
+      "independent_source_groups": 160,
+      "group_bootstrap_accuracy_95_interval": [
+        0.8021390374331551,
+        0.9007100997835383
+      ],
+      "interval_note": "Bootstrap source groups; tiny cohorts and unknown cross-source overlap limit inference. Wilson interval assumes independent examples.",
+      "domain_balanced_accuracy": {
+        "generated-video": 0.9473684210526316,
+        "lip-sync": 0.7956140350877193
+      },
+      "macro_domain_balanced_accuracy": 0.8714912280701754
+    },
+    "h264": {
+      "accuracy": 0.8075601374570447,
+      "accuracy_wilson_95_interval": [
+        0.7583763842430735,
+        0.8487292616359341
+      ],
+      "balanced_accuracy": 0.8198143285821455,
+      "roc_auc": 0.8926294073518379,
+      "confusion_matrix_real_fake": [
+        [
+          36,
+          7
+        ],
+        [
+          49,
+          199
+        ]
+      ],
+      "inconclusive_0.4_to_0.6": 57,
+      "decision_counts_0.4_0.6": {
+        "real": 61,
+        "fake": 173
+      },
+      "false_fake_decisions": 3,
+      "false_real_decisions": 32,
+      "examples": 291,
+      "independent_source_groups": 160,
+      "group_bootstrap_accuracy_95_interval": [
+        0.7437048631133811,
+        0.8427047948784948
+      ],
+      "interval_note": "Bootstrap source groups; tiny cohorts and unknown cross-source overlap limit inference. Wilson interval assumes independent examples.",
+      "domain_balanced_accuracy": {
+        "generated-video": 0.8798008534850641,
+        "lip-sync": 0.7589912280701754
+      },
+      "macro_domain_balanced_accuracy": 0.8193960407776197
+    }
+  },
+  "files": {
+    "model.safetensors": {
+      "bytes": 371567992,
+      "sha256": "df206fd941448042737719822ca25808ace82df65e3f1ad131d1bbcd8ac34af3"
+    },
+    "config.json": {
+      "bytes": 1129,
+      "sha256": "7c579d474c5efaa73bb24dcc062cd6efc9e595b4d98724e4dd785e5bd1628a61"
+    },
+    "preprocessor_config.json": {
+      "bytes": 418,
+      "sha256": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32"
+    },
+    "model_meta.json": {
+      "bytes": 4842,
+      "sha256": "4ebc5215b3f952d23dd8d6d41b7505b8248c119abfc642e0627abe520e8c1115"
+    },
+    "video_head.joblib": {
+      "bytes": 65885,
+      "sha256": "c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d"
+    },
+    "video_meta.json": {
+      "bytes": 5208,
+      "sha256": "1dd0e55c827c1a97a0bf04d691f75ab430ca590190376d8042850af23945f51b"
+    }
+  }
+}

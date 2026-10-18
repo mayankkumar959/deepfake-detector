@@ -43,7 +43,7 @@ for (const value of [undefined,null,NaN,Infinity,-.1,1.1]) {
 assert.ok(renderToStaticMarkup(<Gauge value={.11} verdict="inconclusive" />).includes('Needs review'));
 assert.ok(renderToStaticMarkup(<VerdictBadge verdict="real" size="lg" />).includes('Likely real photo'));
 const notes = renderToStaticMarkup(<ScanNotes warnings={['Detailed research limitation']} isVideo />);
-assert.ok(notes.includes('Results can be wrong') && notes.includes('sampled frames only'));
+assert.ok(notes.includes('Results can be wrong') && notes.includes('trained visual head on sampled frames') && notes.includes('audio is not analyzed'));
 assert.ok(notes.includes('<details') && !notes.includes('<details open'));
 assert.ok(notes.includes('Detailed research limitation'));
 for (const [path, expected] of [['/','Scan Your Media'],['/history','Your Scan History'],['/privacy','Privacy Policy'],['/terms','Terms of Service']]) {

@@ -1,0 +1,3 @@
+# Optional LOCAL research download tools; not production/Railway dependencies.
+# PyTorch/transformers/scikit-learn already belong to the existing ML environment.
+pypdf==6.16.2

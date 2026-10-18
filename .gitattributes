@@ -1,2 +1,4 @@
 backend/runs/general-ai-trained-indoor-20261005/model.safetensors filter=lfs diff=lfs merge=lfs -text
 backend/runs/general-ai-trained-indoor-20261005/*.json -text
+backend/runs/active-image-video-20261018/model.safetensors filter=lfs diff=lfs merge=lfs -text
+backend/runs/active-image-video-20261018/*.json -text

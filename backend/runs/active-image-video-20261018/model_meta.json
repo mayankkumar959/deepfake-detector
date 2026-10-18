@@ -1,0 +1,108 @@
+{
+  "task": "AI-generated versus real; compression preserves labels",
+  "source": "https://zenodo.org/records/10066460 + local Hugging Face snapshots (OpenFakeTiny, Tiny-GenImage)",
+  "training": "Frozen SigLIP, new v3 head; modern generator cohorts plus reused v2 features; four both-label JPEG/resize views",
+  "calibrated": false,
+  "sha256": {
+    "model.safetensors": "df206fd941448042737719822ca25808ace82df65e3f1ad131d1bbcd8ac34af3",
+    "config.json": "7c579d474c5efaa73bb24dcc062cd6efc9e595b4d98724e4dd785e5bd1628a61",
+    "preprocessor_config.json": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32"
+  },
+  "manifest_sha256": "3c6dc39b697f201dce6ab7d6ea912d197be255264a10b25035fb574531943775",
+  "test_metrics": {
+    "accuracy": 0.7950138504155124,
+    "accuracy_wilson_95_interval": [
+      0.7640422772211998,
+      0.8228626342636199
+    ],
+    "balanced_accuracy": 0.7405752308207177,
+    "roc_auc": 0.8080398448727287,
+    "confusion_matrix_real_fake": [
+      [
+        53,
+        26
+      ],
+      [
+        122,
+        521
+      ]
+    ],
+    "inconclusive_0.4_to_0.6": 54,
+    "decision_counts_0.4_0.6": {
+      "real": 147,
+      "fake": 521
+    },
+    "false_fake_decisions": 25,
+    "false_real_decisions": 97,
+    "images": 722,
+    "source_scene_groups": 700,
+    "note": "Sampled source-scene experiment; dependent generated variants are not independent scenes. Scores are uncalibrated.",
+    "samples": 722
+  },
+  "evaluation_scope": "Local frozen-head study with source-scene grouping and JPEG/resize stress; fresh test is modern-generator dominated, uncalibrated and not certified for every generator.",
+  "limitations": [
+    "Frozen image encoder with a newly trained image classification head, not a fully fine-tuned backbone.",
+    "Adds modern generator families (gpt-image/Imagen/MJ v6-7/flux/SD3.5 era, ADM/BigGAN/GLIDE/VQDM/Wukong) but still cannot cover every modern image generation system.",
+    "Source/prompt groups and pHash distance<=6 families share folds; unknown different scenes/bursts may still overlap.",
+    "Publisher pretrained encoder training-set overlap cannot be fully audited.",
+    "JPEG/resize proxies are not actual WhatsApp transport tests; ground truth stays unchanged.",
+    "All scores are uncalibrated model support, not proof or guaranteed authenticity probabilities.",
+    "Face-swap additions (OpenForensics / DF40) are reported only when their sources are wired in; DeepFakeFace remains diagnostic-only.",
+    "Real-photo test cohort is still smaller than the fake cohorts; source-specific shortcuts still limit generalization.",
+    "Old observed tests (v1 and v2) are diagnostic only; no fresh test used for selection.",
+    "Non-commercial academic datasets: retain citations/licences and do not redistribute raw images."
+  ],
+  "licences": [
+    "Synthbuster CC-BY-NC-SA-4.0",
+    "RAISE non-commercial research and education; preserve licence and cite authors",
+    "OpenFakeTiny CC-BY-NC-4.0",
+    "Tiny-GenImage research licence; preserve attribution"
+  ],
+  "active": true,
+  "activation": {
+    "activated": true,
+    "packaged_at_unix": 1792315629.1612136,
+    "image_source": "C:\\Users\\mayan\\OneDrive\\Desktop\\Final year project\\Final year project\\deepfake\\backend\\runs\\candidate-image-v3-20261018\\compatible_model",
+    "video_source": "C:\\Users\\mayan\\OneDrive\\Desktop\\Final year project\\Final year project\\deepfake\\backend\\runs\\candidate-video-v3-20261018",
+    "video_model": "SigLIP-Video-v3",
+    "video_head_sha256": "c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d",
+    "video_test_metrics_clean": {
+      "accuracy": 0.8694158075601375,
+      "accuracy_wilson_95_interval": [
+        0.8258415254092278,
+        0.9033635799761724
+      ],
+      "balanced_accuracy": 0.8657164291072768,
+      "roc_auc": 0.9192610652663166,
+      "confusion_matrix_real_fake": [
+        [
+          37,
+          6
+        ],
+        [
+          32,
+          216
+        ]
+      ],
+      "inconclusive_0.4_to_0.6": 38,
+      "decision_counts_0.4_0.6": {
+        "real": 49,
+        "fake": 204
+      },
+      "false_fake_decisions": 5,
+      "false_real_decisions": 19,
+      "examples": 291,
+      "independent_source_groups": 160,
+      "group_bootstrap_accuracy_95_interval": [
+        0.8021390374331551,
+        0.9007100997835383
+      ],
+      "interval_note": "Bootstrap source groups; tiny cohorts and unknown cross-source overlap limit inference. Wilson interval assumes independent examples.",
+      "domain_balanced_accuracy": {
+        "generated-video": 0.9473684210526316,
+        "lip-sync": 0.7956140350877193
+      },
+      "macro_domain_balanced_accuracy": 0.8714912280701754
+    }
+  }
+}

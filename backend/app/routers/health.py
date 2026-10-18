@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..config import get_settings
 from ..ml.engine import get_ml_status
+from ..ml.general_video import video_status
 
 router = APIRouter(prefix="/health", tags=["health"])
 
@@ -21,6 +22,7 @@ def health(db: Session = Depends(get_db)):
         db_ok = False
 
     ml_status = get_ml_status()
+    video_ml_status = video_status()
 
     celery_ok = False
     try:
@@ -37,6 +39,7 @@ def health(db: Session = Depends(get_db)):
         "database": "connected" if db_ok else "error",
         "database_backend": db.get_bind().dialect.name,
         "detection_engine": ml_status,
+        "video_detection_engine": video_ml_status,
         "background_worker": "celery" if celery_ok else "inline-thread",
         "environment": settings.APP_ENV,
         "retention_hours": settings.RETENTION_HOURS,

@@ -1,8 +1,8 @@
-# Fortexa — AI-generated image analysis
+# Fortexa — AI-generated image and video analysis
 
-React/Vite, FastAPI, offline SigLIP classification, private browser history and downloadable reports. Compression preserves origin labels for both real and AI images. No face is required.
+React/Vite, FastAPI, offline SigLIP classification, private browser history and downloadable reports. Compression preserves origin labels for both real and AI images. No face is required. Videos use a trained visual temporal head on six centred frames plus a per-frame image timeline; audio is not analysed.
 
-Active model: backend/runs/general-ai-trained-indoor-20261005. See GENERAL_AI_STATUS.md for actual training/regressions and limitations. Experimental research app, not production-certified authenticity detection.
+Model: the image+video v3 package (backend/runs/active-image-video-20261018) is the deployment default (Docker MODEL_DIR, Railway) and can be activated locally by switching RUNS_DIR in backend/.env; the previous model (backend/runs/general-ai-trained-indoor-20261005) remains the rollback artifact. See DEPLOY.md, GENERAL_AI_STATUS.md, IMAGE_TRAINING.md and VIDEO_DETECTOR.md for measured results and limitations. Experimental research app, not production-certified authenticity detection.
 
 ## Run
 
@@ -40,4 +40,4 @@ Browser checks: npm run serve with APP_ENV=test and disposable DATABASE_URL/UPLO
 Historical verify_product.py checks the old facial pipeline, NOT this detector.
 
 backend/train_general_head.py trains a new frozen-encoder head with deduplication, grouped splits and both-class JPEG augmentation; it refuses to overwrite a candidate. Small study: 362 originals, 34/41 test decisions correct. Not broad deployment accuracy. Raw datasets and old facial ZIPs are unnecessary for inference.
-Missing weights, blank and under-224px inputs are inconclusive. Generic Photoshop and validated temporal video detection are unsupported. See GENERAL_AI_STATUS.md and SUBMISSION_CHECKLIST.md before submission.
+Missing weights, blank and under-224px inputs are inconclusive. Generic Photoshop detection and audio/lip-sync analysis are unsupported; video uses a small uncalibrated visual temporal benchmark. See GENERAL_AI_STATUS.md, VIDEO_DETECTOR.md and SUBMISSION_CHECKLIST.md before submission.

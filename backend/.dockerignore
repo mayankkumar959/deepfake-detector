@@ -8,3 +8,7 @@ __pycache__
 *.pyc
 .git
 .runtime-check
+# Feature caches and inactive candidates never enter a Docker build context.
+runs/candidate-*
+runs/general-ai-siglip
+runs/active-demo-*

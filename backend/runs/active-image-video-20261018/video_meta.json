@@ -1,0 +1,125 @@
+{
+  "format_version": 1,
+  "status": "experimental_local_only",
+  "model": "SigLIP-Video-v3",
+  "method": "six frames from the centred 2-second window; frozen SigLIP mean/std/absolute-delta plus source-agnostic texture statistics",
+  "selected_model": "Pipeline",
+  "selected_texture": false,
+  "feature_width": 2304,
+  "test_metrics": {
+    "clean": {
+      "accuracy": 0.8694158075601375,
+      "accuracy_wilson_95_interval": [
+        0.8258415254092278,
+        0.9033635799761724
+      ],
+      "balanced_accuracy": 0.8657164291072768,
+      "roc_auc": 0.9192610652663166,
+      "confusion_matrix_real_fake": [
+        [
+          37,
+          6
+        ],
+        [
+          32,
+          216
+        ]
+      ],
+      "inconclusive_0.4_to_0.6": 38,
+      "decision_counts_0.4_0.6": {
+        "real": 49,
+        "fake": 204
+      },
+      "false_fake_decisions": 5,
+      "false_real_decisions": 19,
+      "examples": 291,
+      "independent_source_groups": 160,
+      "group_bootstrap_accuracy_95_interval": [
+        0.8021390374331551,
+        0.9007100997835383
+      ],
+      "interval_note": "Bootstrap source groups; tiny cohorts and unknown cross-source overlap limit inference. Wilson interval assumes independent examples.",
+      "domain_balanced_accuracy": {
+        "generated-video": 0.9473684210526316,
+        "lip-sync": 0.7956140350877193
+      },
+      "macro_domain_balanced_accuracy": 0.8714912280701754
+    },
+    "h264": {
+      "accuracy": 0.8075601374570447,
+      "accuracy_wilson_95_interval": [
+        0.7583763842430735,
+        0.8487292616359341
+      ],
+      "balanced_accuracy": 0.8198143285821455,
+      "roc_auc": 0.8926294073518379,
+      "confusion_matrix_real_fake": [
+        [
+          36,
+          7
+        ],
+        [
+          49,
+          199
+        ]
+      ],
+      "inconclusive_0.4_to_0.6": 57,
+      "decision_counts_0.4_0.6": {
+        "real": 61,
+        "fake": 173
+      },
+      "false_fake_decisions": 3,
+      "false_real_decisions": 32,
+      "examples": 291,
+      "independent_source_groups": 160,
+      "group_bootstrap_accuracy_95_interval": [
+        0.7437048631133811,
+        0.8427047948784948
+      ],
+      "interval_note": "Bootstrap source groups; tiny cohorts and unknown cross-source overlap limit inference. Wilson interval assumes independent examples.",
+      "domain_balanced_accuracy": {
+        "generated-video": 0.8798008534850641,
+        "lip-sync": 0.7589912280701754
+      },
+      "macro_domain_balanced_accuracy": 0.8193960407776197
+    }
+  },
+  "evaluation_scope": "Fresh source-group-disjoint visual test: 291 clips, 160 source groups; not a universal benchmark and not evaluated on audio.",
+  "training": "Frozen image encoder plus a trained video-level statistical head",
+  "config": {
+    "version": 3,
+    "frames": 6,
+    "window_seconds": 2.0,
+    "border_crop": 0.08,
+    "h264_crf": 35,
+    "max_edge": 480,
+    "preset": "ultrafast",
+    "features": "SigLIP mean/std/absolute-delta + gray residual FFT gradient temporal statistics",
+    "folder_augmentation": "six sampled frames encoded at 3fps; NOT a full original transcode",
+    "encoder_sha256": "ab0b8cad7462a047ff4e2888cb4f11b1abe568d73ce07a2649a3f1541f73675f",
+    "processor_sha256": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32",
+    "config_sha256": "4ae0303aff5c84eaeabc3721ccc931a8b2968ed8e1d1a1285159242bf2a36da0"
+  },
+  "sha256": {
+    "video_head.joblib": "c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d"
+  },
+  "head_sha256": "c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d",
+  "encoder_sha256": "ab0b8cad7462a047ff4e2888cb4f11b1abe568d73ce07a2649a3f1541f73675f",
+  "processor_sha256": "0540e59bcd8f44c3d097169b846c4745186805fce5a876036f3f8c6d9edfcc32",
+  "limitations": [
+    "Frozen image encoder + trained video statistical head, not a fully fine-tuned video backbone.",
+    "Scores are uncalibrated classifier support, not authenticity probabilities.",
+    "Visual only: does not test audio or audio/video synchronisation.",
+    "H264 CRF35 stress is not actual WhatsApp transport.",
+    "Face cohorts use six selected frames; H264 augmentation is a sampled-sequence encode, not full originals.",
+    "HQ/LQ swaps and multiple clips from the same identity are dependent examples; groups merge known identities across methods.",
+    "Lipsync-A InfiniteTalk has no public pairing metadata: rows pair by file number only.",
+    "AIGVDBench/DF40 official splits are ignored; fresh splits are assigned by this manifest.",
+    "TalkingHeadBench ships fakes without matching reals; the real side comes from HDTF/DF40/Lipsync-A.",
+    "HDTF-Real serves as the real side for the generated-video cohort; content differs from generated scenes.",
+    "Small, source-limited benchmark; watermark, codec, generator and scene shortcuts remain possible.",
+    "Old observed test is diagnostic only; fresh test groups exclude every old group.",
+    "No guarantee for every camera video or unseen generation method."
+  ],
+  "created_at_unix": 1792312241.762321
+}

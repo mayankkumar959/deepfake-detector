@@ -18,13 +18,13 @@ RUN pip install --no-cache-dir torch torchvision tqdm \
 
 # App code + trained model artifact
 COPY app ./app
-ARG MODEL_DIR=runs/general-ai-trained-indoor-20261005
+ARG MODEL_DIR=runs/active-image-video-20261018
 COPY ${MODEL_DIR}/ ./runs/active/
 # Railway's upload gateway cannot accept the full model in the source archive.
 # Small source-only deployments fetch the identical, commit-pinned LFS artifact.
 # Local builds can still copy the existing weights without downloading them.
-ARG MODEL_WEIGHTS_URL=https://media.githubusercontent.com/media/mayankkumar959/deepfake-detector/33924184a2a602987697b6c9baeb3459d2d216db/backend/runs/general-ai-trained-indoor-20261005/model.safetensors
-ARG MODEL_WEIGHTS_SHA256=ef46ab15e8e1dbbc5c24307a75c440c2d0d423574d9ac67a3e16851c03e0a613
+ARG MODEL_WEIGHTS_URL=https://media.githubusercontent.com/media/mayankkumar959/deepfake-detector/main/backend/runs/active-image-video-20261018/model.safetensors
+ARG MODEL_WEIGHTS_SHA256=df206fd941448042737719822ca25808ace82df65e3f1ad131d1bbcd8ac34af3
 RUN if [ ! -f ./runs/active/model.safetensors ]; then \
       curl --fail --location --retry 3 "$MODEL_WEIGHTS_URL" \
         --output ./runs/active/model.safetensors; \

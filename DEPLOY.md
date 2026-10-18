@@ -45,21 +45,70 @@ without persistent media storage files can be lost even while Neon keeps records
 Select resources based on measured PyTorch/video memory usage, not an assumed
 free-tier capacity. See the verified demo deployment below.
 
-Before a Docker build, choose the evaluated checkpoint directory explicitly:
+Before a Docker build, choose the evaluated package directory explicitly. The v3
+image + video package is assembled by backend/package_active.py:
 
 ```powershell
-$env:FORTEXA_MODEL_DIR = 'runs/general-ai-trained-indoor-20261005'
+python backend/package_active.py               # writes backend/runs/active-image-video-20261018
+python backend/finalize_deployment.py          # updates Dockerfile URL/SHA + compose default
+$env:FORTEXA_MODEL_DIR = 'runs/active-image-video-20261018'
 docker compose up --build
 ```
 
 The directory must contain model.safetensors, config.json,
-preprocessor_config.json and model_meta.json inside backend. Compose defaults to
-the trained indoor model; Docker copies it to /app/runs/active matching RUNS_DIR.
-When model.safetensors is absent from the build context, the Dockerfile downloads
-the identical artifact from a pinned GitHub LFS commit and verifies its SHA256.
-The active trained weight uses Git LFS. Ensure git lfs pull completes before a
-Docker build: a small LFS pointer is not a usable model. Inactive weights and raw
-training data are not included in the current source tree.
+preprocessor_config.json, model_meta.json, video_head.joblib and video_meta.json
+inside backend. The same directory is mounted as RUNS_DIR; the image detector
+reuses its frozen SigLIP tower for the video head, so no second 350 MB encoder is
+needed. When model.safetensors is absent from the build context, the Dockerfile
+downloads the commit-pinned artifact from GitHub LFS and verifies its SHA256.
+Ensure git lfs push/pull completes before a Docker build: a small LFS pointer is
+not a usable model. Never mix video_head.joblib with an unrelated image model:
+both v2 and v3 video heads were trained on the base SigLIP tower, and the v2
+image artifact's vision tensors were verified byte-identical to
+runs/general-ai-siglip/model.safetensors.
+
+### Activate locally (college demo, no hosting)
+
+```powershell
+python backend/package_active.py
+powershell -ExecutionPolicy Bypass -File setup-general-ai.ps1
+```
+
+Then change only RUNS_DIR in backend/.env (keep DETECTOR_TASK=ai-image):
+
+```
+RUNS_DIR=./runs/active-image-video-20261018
+```
+
+Restart the backend so Settings is re-read, then check
+http://localhost:8000/api/health. `detection_engine.status` must be
+ml-ai-image-classifier and `video_detection_engine.status` must be
+ml-ai-video-classifier. A wrong path or checksum makes the image detector
+silently return 0.5/inconclusive instead of an explicit error, so never skip
+this check. Smoke-test one real and one fake clip from
+backend/data/demo-samples (expected outcomes are listed in its README.txt), then
+open a scan in the browser and confirm the timeline, warnings and report JSON.
+The scripted version of these smoke tests is
+`python backend/verify_package_demo.py --runs runs/active-image-video-20261018`
+(disposable database; uploads every demo sample through the real API and prints
+a verdict table).
+Rollback is one line: set RUNS_DIR back to
+./runs/general-ai-trained-indoor-20261005 and restart.
+
+## Video analysis in the deployed app
+
+- The timeline uses up to 16 evenly spaced frames scored by the image model.
+- The overall video verdict uses the trained temporal head from
+  video_head.joblib: six frames from the centred 2-second window, 8% border
+  crop, 224x224, frozen SigLIP mean/std/absolute-delta plus source-agnostic
+  texture/temporal statistics. video_meta.json pins the head SHA256, feature
+  width and selected texture flag.
+- If video_head.joblib/video_meta.json are absent or the clip cannot be sampled
+  (too short, blank), the app falls back to the per-frame image-model mean and
+  says so in the report warnings. It never silently substitutes an untrained
+  score.
+- Visual only: audio and audio/video synchronisation are not assessed.
+- /api/health reports both detection_engine and video_detection_engine.
 
 ## Verified demo deployment — 2026-10-06
 
@@ -101,6 +150,26 @@ application files to Git's index before deploying. Temporary source folders are
 retained for inspection, and contain no credentials or original model binaries.
 If the evaluated model changes, update the Dockerfile's pinned download URL and
 SHA256 together; never silently fall back to an upstream classifier head.
+
+### Image + video v3 update (weights via GitHub LFS)
+
+```powershell
+python backend/package_active.py
+python backend/finalize_deployment.py   # rewrites URL/SHA, compose default, .gitattributes
+git add backend/runs/active-image-video-20261018
+git add -f backend/runs/active-image-video-20261018/model.safetensors
+git commit -m "Deploy image+video v3 package"
+git push origin main
+git lfs ls-files                        # model.safetensors must not be a pointer
+.\deploy-railway.ps1 -StageOnly         # packaging inspection, no credits spent
+.\deploy-railway.ps1                    # uploads source; Docker pulls the LFS weight
+```
+
+The Dockerfile only downloads the weight after the LFS push to main succeeds;
+the commit-pinned `media.githubusercontent.com` URL does not work before that.
+Vercel rebuilds the frontend from the same push. The previous
+`runs/general-ai-trained-indoor-20261005` folder stays in the repository as the
+rollback artifact; the deployment default moves to the v3 package.
 
 Idle sleeping is requested to save trial credits, but cold starts can delay the
 first request and background/database traffic can prevent sleeping. Do not
