@@ -79,11 +79,7 @@ export async function downloadScanReport(scan) {
   const aiScore = pct(scan.fake_probability)
   const realScore = pct(report.real_probability) ?? (aiScore != null ? 100 - aiScore : null)
 
-  const [originalImage, annotationImage, thumbnailImage] = await Promise.allSettled([
-    isVideo ? Promise.reject(new Error('skipped')) : fetchImageData(scan, 'original'),
-    isVideo ? Promise.reject(new Error('skipped')) : fetchImageData(scan, 'heatmap.jpg', 1200),
-    isVideo ? fetchImageData(scan, 'thumbnail.jpg', 1200) : Promise.reject(new Error('skipped')),
-  ]).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : null)))
+  const preview = await (isVideo ? fetchImageData(scan, 'thumbnail.jpg', 1200) : fetchImageData(scan, 'original')).catch(() => null)
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true })
   let y = PAGE.margin
@@ -167,7 +163,7 @@ export async function downloadScanReport(scan) {
     `Risk level: ${report.risk_label || '—'}   ·   Real-photo score: ${realScore != null ? `${realScore}/100` : '—'}`,
     PAGE.margin + 5, panelTop + 19.6, { size: 8.5, color: MUTED },
   )
-  text('AI-GENERATION SCORE', PAGE.w - PAGE.margin - 5, panelTop + 5.5, { size: 7, style: 'bold', color: MUTED, align: 'right', charSpace: 0.4 })
+  text('AI-GENERATION SCORE', PAGE.w - PAGE.margin - 6, panelTop + 5.5, { size: 6.5, style: 'bold', color: MUTED, align: 'right' })
   if (aiScore != null) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(22)
@@ -179,19 +175,27 @@ export async function downloadScanReport(scan) {
   }
   y = panelTop + 34
 
-  // ── Score bar with decision thresholds ─────────────────────────
+  // ── Score scale: real / inconclusive / AI zones + marker ───────
   const barH = 5
-  doc.setFillColor(TRACK[0], TRACK[1], TRACK[2])
-  doc.roundedRect(PAGE.margin, y, CW, barH, barH / 2, barH / 2, 'F')
-  if (aiScore != null) {
-    const prob = Math.min(1, Math.max(0, scan.fake_probability ?? 0.5))
-    doc.setFillColor(verdict.bar[0], verdict.bar[1], verdict.bar[2])
-    doc.roundedRect(PAGE.margin, y, Math.max(barH, CW * prob), barH, barH / 2, barH / 2, 'F')
+  const zones = [
+    [0, 0.4, [187, 247, 208]],
+    [0.4, 0.6, [253, 230, 138]],
+    [0.6, 1, [254, 202, 202]],
+  ]
+  for (const [from, to, color] of zones) {
+    doc.setFillColor(color[0], color[1], color[2])
+    doc.rect(PAGE.margin + CW * from, y, CW * (to - from), barH, 'F')
   }
   doc.setDrawColor(255, 255, 255)
-  doc.setLineWidth(0.5)
-  doc.line(PAGE.margin + CW * 0.4, y - 1, PAGE.margin + CW * 0.4, y + barH + 1)
-  doc.line(PAGE.margin + CW * 0.6, y - 1, PAGE.margin + CW * 0.6, y + barH + 1)
+  doc.setLineWidth(0.6)
+  doc.line(PAGE.margin + CW * 0.4, y, PAGE.margin + CW * 0.4, y + barH)
+  doc.line(PAGE.margin + CW * 0.6, y, PAGE.margin + CW * 0.6, y + barH)
+  if (aiScore != null) {
+    const prob = Math.min(1, Math.max(0, scan.fake_probability ?? 0.5))
+    const markerX = PAGE.margin + Math.min(CW - 1.2, Math.max(1.2, CW * prob))
+    doc.setFillColor(31, 41, 55)
+    doc.roundedRect(markerX - 1, y - 2, 2, barH + 4, 1, 1, 'F')
+  }
   y += barH + 2.6
   text('0', PAGE.margin, y, { size: 7, color: MUTED })
   text('40', PAGE.margin + CW * 0.4, y, { size: 7, color: MUTED, align: 'center' })
@@ -242,10 +246,7 @@ export async function downloadScanReport(scan) {
       text(label, x, ty, { size: 8.5, color: MUTED })
       const lines = measure(value ?? '—', width - 34, 8.5, 'bold')
       lines.forEach((line, index) => text(line, x + 34, ty + index * 4.2, { size: 8.5, style: 'bold' }))
-      ty = Math.max(ty + 5.6, ty + lines.length * 4.2 + 1.4)
-      doc.setDrawColor(LINE[0], LINE[1], LINE[2])
-      doc.setLineWidth(0.15)
-      doc.line(x, ty - 3.4, x + width, ty - 3.4)
+      ty = Math.max(ty + 6, ty + lines.length * 4.3 + 1.3)
     }
     return ty
   }
@@ -255,12 +256,9 @@ export async function downloadScanReport(scan) {
   const rightEnd = drawDetails(PAGE.margin + 98, 84, detailRows.slice(half), detailsTop)
   y = Math.max(leftEnd, rightEnd) + 2
 
-  const images = (isVideo
-    ? [thumbnailImage && { ...thumbnailImage, caption: 'Sampled frame (thumbnail)' }]
-    : [
-      originalImage && { ...originalImage, caption: 'Original image' },
-      annotationImage && { ...annotationImage, caption: 'Score annotation (overlay only; not a manipulation map)' },
-    ]).filter(Boolean)
+  const images = preview
+    ? [{ ...preview, caption: isVideo ? 'Sampled frame (thumbnail)' : 'Original image' }]
+    : []
   if (images.length) {
     const gap = 8
     const boxW = (CW - gap * (images.length - 1)) / images.length
