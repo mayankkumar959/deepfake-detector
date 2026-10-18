@@ -4,23 +4,32 @@ Everything is resumable. Nothing is ever lost on shutdown: finished work
 stays cached on disk, unfinished work is re-done automatically on the next
 run.
 
-## Status (as of 2026-10-18 ~14:55)
+## Status (as of 2026-10-18 ~16:15 — DEPLOYED AND LIVE)
 
 - **Image v2: DONE.** Report: `runs/candidate-image-v2-20261006/report.json`
-  (candidate is better than the active model on every view; NOT activated --
-  activation is a manual decision).
-- **Image v3: DONE.** Report: `runs/candidate-image-v3-20261018/report.json`
+  (candidate is better than the active model on every view; superseded by
+  v3 below).
+- **Image v3: DONE + DEPLOYED.** Report: `runs/candidate-image-v3-20261018/report.json`
   (fresh test, 722 images / 700 source-scene groups: clean 79.5% accuracy /
   74.1% balanced / 0.808 ROC AUC; same-test head comparison: previous indoor
   0.540, v2 head 0.595, v3 head 0.808). `compatible_model/` holds the
-  deployable files. NOT activated.
-- **Video v3: DONE.** Report: `runs/candidate-video-v3-20261018/report.json`
+  deployable files; selected as the active model and deployed 2026-10-18.
+- **Video v3: DONE + DEPLOYED.** Report: `runs/candidate-video-v3-20261018/report.json`
   (fresh test, 291 clips: clean 86.9% acc / 86.6% balanced / 0.919 ROC AUC;
-  H.264 CRF35 stress 80.8% / 82.0% / 0.893; NOT activated). `video_head.joblib`
-  and `video_meta.json` sit in the same folder.
-- **Deployable package: BUILT.** `runs/active-image-video-20261018/`
-  (image v3 + video v3, checksums verified by `setup-general-ai.ps1`).
-  Activation and deployment are explicit manual steps (see DEPLOY.md).
+  H.264 CRF35 stress 80.8% / 82.0% / 0.893). `video_head.joblib`
+  and `video_meta.json` sit in the same folder; deployed 2026-10-18.
+- **Deployable package: BUILT, DEPLOYED, VERIFIED (2026-10-18).**
+  `runs/active-image-video-20261018/` (image v3 + video v3, checksums
+  verified). Pushed as commit `1e4d503` (weight via Git LFS, SHA
+  `df206fd9...`); Railway deployment `ae462030-...` is live:
+  https://fortexa-api-production.up.railway.app -- `/api/health` reports
+  `ml-ai-image-classifier` + `ml-ai-video-classifier` (head `c0825f7f...`).
+  Remote end-to-end scans matched local baselines exactly (see
+  `runs/active-image-video-20261018/deployment_verification.json`).
+  Frontend: https://fortexa-ai-demo.vercel.app (rebuilt from the same push).
+  Remaining manual local step: `backend/.env` still points at the old
+  indoor model -- switch `RUNS_DIR` to `./runs/active-image-video-20261018`
+  for the same v3 behaviour locally.
 - **Downloads: effectively done** for v3. All groups landed; `lipsync_a` is at
   ~90% and stopped on a Hugging Face rate limit -- re-running
   `python fetch_new_datasets.py lipsync_a` resumes it. The built manifest is

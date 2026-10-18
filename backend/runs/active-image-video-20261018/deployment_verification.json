@@ -1,0 +1,32 @@
+{
+  "verified_at_local": "2026-10-18 ~16:02-16:06 (IST)",
+  "git_commit": "1e4d503424026ec65790ec4c0005ea8853c25f4d",
+  "railway_deployment_id": "ae462030-862b-492d-88ef-0050d58adb76",
+  "api": "https://fortexa-api-production.up.railway.app",
+  "frontend": "https://fortexa-ai-demo.vercel.app",
+  "health": {
+    "status": "ok",
+    "image_engine": "ml-ai-image-classifier (v3 head; clean 79.5% acc / 74.1% balanced / 0.808 AUC)",
+    "video_engine": "ml-ai-video-classifier (SigLIP-Video-v3; head_sha256 c0825f7fe446c238b79ae7a4ba00c89f1c84851df501b3d486b9f0bcf780ae0d)",
+    "database": "connected (postgresql)",
+    "background_worker": "inline-thread"
+  },
+  "remote_scans": [
+    {"file": "real_photo_imagenet_b.png", "verdict": "real", "fake_probability": 0.0112, "method": "ml-ai-image-classifier", "duration_ms": 2672},
+    {"file": "fake_iplap_lipsync.mp4", "verdict": "fake", "fake_probability": 0.9291, "method": "ml-ai-video-classifier", "frames": 153, "duration_ms": 24316},
+    {"file": "real_hdtf_face.mp4", "verdict": "real", "fake_probability": 0.3625, "method": "ml-ai-video-classifier", "frames": 81, "duration_ms": 13227}
+  ],
+  "parity_note": "All three remote scores match the local end-to-end baselines exactly; the deployed runtime is identical to the verified local pipeline.",
+  "weight_provenance": {
+    "lfs_media_url": "https://media.githubusercontent.com/media/mayankkumar959/deepfake-detector/main/backend/runs/active-image-video-20261018/model.safetensors",
+    "http_status": 200,
+    "size_bytes": 371567992,
+    "sha256": "df206fd941448042737719822ca25808ace82df65e3f1ad131d1bbcd8ac34af3"
+  },
+  "known_limitations": [
+    "Scores are uncalibrated; visible in the UI as a heuristic score.",
+    "Image detector: ~79.5% accuracy on the fresh v3 test; weakest on LAION/Pexels mirror-real photos (~47%) - state this honestly in the viva.",
+    "Video detector: ~86.9% clean / 80.8% after H.264 stress; no face-swap domain in the video test set.",
+    "Railway free plan: app sleeps when idle; the first request after a nap takes ~30-60 s to wake."
+  ]
+}
