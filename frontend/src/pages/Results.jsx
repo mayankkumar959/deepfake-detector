@@ -4,7 +4,8 @@ import {
   ArrowLeft, Clock, Camera, Video, AlertTriangle,
   FileText, Flame, Zap,
 } from 'lucide-react'
-import api, { mediaUrl as scanMediaUrl, downloadReport, handleError } from '../api/client'
+import api, { mediaUrl as scanMediaUrl, handleError } from '../api/client'
+import { downloadScanReport } from '../lib/scanReportPdf'
 import Gauge from '../components/ui/Gauge'
 import VerdictBadge from '../components/ui/VerdictBadge'
 import Spinner from '../components/ui/Spinner'
@@ -132,7 +133,7 @@ export default function Results() {
             </span>
           </div>
         </div>
-        <button className="btn-secondary" onClick={() => downloadReport(scan)}>Download Report</button>
+        <button className="btn-secondary" onClick={() => downloadScanReport(scan)}>Download Report</button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { Upload, Image as ImageIcon, Film, X, AlertCircle, Loader2, ShieldCheck, History, Menu, FileText, Lock } from 'lucide-react'
-import api, { mediaUrl as scanMediaUrl, downloadReport } from '../api/client'
+import api, { mediaUrl as scanMediaUrl } from '../api/client'
+import { downloadScanReport } from '../lib/scanReportPdf'
 import Logo from '../components/layout/Logo'
 import Gauge from '../components/ui/Gauge'
 import VerdictBadge from '../components/ui/VerdictBadge'
@@ -213,7 +214,7 @@ export default function Scanner() {
           <ScanNotes warnings={result.report?.warnings} isVideo={result.media_type === 'video'} />
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to={`/results/${result.id}`} className="btn-secondary">Full Report</Link>
-            <button onClick={() => downloadReport(result)} className="btn-secondary">Download Report</button>
+            <button onClick={() => downloadScanReport(result)} className="btn-secondary">Download Report</button>
             <button onClick={reset} className="btn-primary"><Upload size={16} /> Scan Another File</button>
           </div>
         </main>
