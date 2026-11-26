@@ -11,15 +11,15 @@ export default function Gauge({ value, label = 'AI-generation score', verdict })
       <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-fortexa-muted">Classification scores</p>
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 sm:p-4">
-          <p className="text-xs font-semibold text-emerald-300 sm:text-sm">Real-image score</p>
-          <p className="mt-2 whitespace-nowrap text-xl font-bold text-emerald-400 sm:text-3xl">{real} / 100</p>
+          <p className="text-xs font-semibold text-emerald-800 sm:text-sm">Real-image score</p>
+          <p className="mt-2 whitespace-nowrap text-xl font-bold text-emerald-700 sm:text-3xl">{real} / 100</p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" role="meter" aria-label="Real-image score" aria-valuemin={0} aria-valuemax={100} aria-valuenow={real}>
             <div className="h-full rounded-full bg-emerald-500" style={{ width: `${real}%` }} />
           </div>
         </div>
         <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3 sm:p-4">
-          <p className="text-xs font-semibold text-red-300 sm:text-sm">AI-generation score</p>
-          <p className="mt-2 whitespace-nowrap text-xl font-bold text-red-400 sm:text-3xl">{ai} / 100</p>
+          <p className="text-xs font-semibold text-red-800 sm:text-sm">AI-generation score</p>
+          <p className="mt-2 whitespace-nowrap text-xl font-bold text-red-700 sm:text-3xl">{ai} / 100</p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" role="meter" aria-label="AI-generation score" aria-valuemin={0} aria-valuemax={100} aria-valuenow={ai}>
             <div className="h-full rounded-full bg-red-500" style={{ width: `${ai}%` }} />
           </div>

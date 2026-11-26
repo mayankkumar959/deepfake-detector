@@ -5,20 +5,20 @@ export default {
     extend: {
       colors: {
         fortexa: {
-          primary: '#10b981',
-          secondary: '#a3e635',
-          accent: '#f59e0b',
-          danger: '#f43f5e',
-          success: '#22c55e',
-          bg: '#050807',
-          card: '#0c1411',
-          border: '#1e2b25',
-          text: '#f2f7f4',
-          muted: '#8fa69b',
+          primary: '#496b53',
+          secondary: '#71836b',
+          accent: '#a77928',
+          danger: '#b84b45',
+          success: '#496b53',
+          bg: '#f7f7f3',
+          card: '#ffffff',
+          border: '#e3e5de',
+          text: '#292f2a',
+          muted: '#69736b',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',

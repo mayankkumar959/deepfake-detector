@@ -48,7 +48,7 @@ export default function ScanHistory() {
         <button className="btn-secondary" disabled={loading || deleting !== null} onClick={() => setReload(value => value + 1)}><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh</button>
       </div>
       <p className="mb-6 text-xs text-fortexa-muted">Private to this browser · Scans expire automatically.</p>
-      {error && <p role="alert" className="mb-4 text-red-300">{error}</p>}
+      {error && <p role="alert" className="mb-4 text-red-700">{error}</p>}
       {loading && <p className="text-fortexa-muted">Loading scans…</p>}
       {!loading && !error && !items.length && (
         <div className="card flex flex-col items-center gap-4 py-16 text-center">
@@ -66,7 +66,7 @@ export default function ScanHistory() {
               <p className="mt-1 text-xs text-fortexa-muted">{scan.media_type} · {scan.status} · {new Date(scan.created_at).toLocaleString()}</p>
             </Link>
             {scan.verdict && <VerdictBadge verdict={scan.verdict} />}
-            <button className="btn-secondary !px-3 hover:!text-red-300" aria-label={`Delete ${scan.filename}`} disabled={deleting !== null || loading || ['pending', 'processing'].includes(scan.status)} onClick={() => remove(scan.id)}><Trash2 size={16} /></button>
+            <button className="btn-secondary !px-3 hover:!text-red-700" aria-label={`Delete ${scan.filename}`} disabled={deleting !== null || loading || ['pending', 'processing'].includes(scan.status)} onClick={() => remove(scan.id)}><Trash2 size={16} /></button>
           </div>
         ))}
       </div>

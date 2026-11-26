@@ -4,10 +4,10 @@ import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react'
 const ToastContext = createContext(null)
 
 const styles = {
-  success: { icon: CheckCircle2, color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
-  error: { icon: XCircle, color: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-500/10' },
-  info: { icon: Info, color: 'text-sky-400', border: 'border-sky-500/30', bg: 'bg-sky-500/10' },
-  warning: { icon: AlertTriangle, color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
+  success: { icon: CheckCircle2, color: 'text-emerald-700', border: 'border-emerald-200', bg: 'bg-emerald-50' },
+  error: { icon: XCircle, color: 'text-red-700', border: 'border-red-200', bg: 'bg-red-50' },
+  info: { icon: Info, color: 'text-sky-700', border: 'border-sky-200', bg: 'bg-sky-50' },
+  warning: { icon: AlertTriangle, color: 'text-amber-800', border: 'border-amber-200', bg: 'bg-amber-50' },
 }
 
 export function ToastProvider({ children }) {

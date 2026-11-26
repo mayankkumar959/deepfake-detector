@@ -179,7 +179,7 @@ export default function Scanner() {
           </nav>
           <div className="flex items-center gap-3">
             <div role="status" className="hidden items-center gap-2 text-xs text-fortexa-muted lg:flex">
-              <ShieldCheck size={14} className={health?.detection_engine?.status === 'ml-ai-image-classifier' ? 'text-fortexa-primary' : 'text-amber-300'} />
+              <ShieldCheck size={14} className={health?.detection_engine?.status === 'ml-ai-image-classifier' ? 'text-fortexa-primary' : 'text-amber-700'} />
               {!health ? 'Connecting…' : health.status === 'offline' ? 'Offline' : health.database !== 'connected' ? 'Service unavailable' : health.detection_engine?.status === 'ml-ai-image-classifier' ? 'Ready' : 'Model unavailable'}
             </div>
             <Link to="/history" className="btn-secondary !px-3"><History size={16} /> Your Scans</Link>
@@ -200,7 +200,7 @@ export default function Scanner() {
             {result.verdict && <div className="mb-5"><VerdictBadge verdict={result.verdict} size="lg" /></div>}
             {hasScore && <Gauge value={result.fake_probability} verdict={result.verdict} size={200} />}
             <p className="mt-3 max-w-full truncate text-sm text-fortexa-muted">{result.filename}</p>
-            {!hasScore && <p className="mt-3 text-sm text-amber-300">
+            {!hasScore && <p className="mt-3 text-sm text-amber-800">
               {result.report?.warnings?.some(warning => warning.includes('insufficient visual detail'))
                 ? 'Image is too small or has insufficient visual detail.'
                 : 'Classification unavailable. Check the report for details.'}
@@ -225,7 +225,7 @@ export default function Scanner() {
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Scan Your Media</h1>
             <p className="mt-3 text-sm text-fortexa-muted">Check a photo or video for AI-generated content.</p>
           </div>
-          {errorMsg && status !== 'error' && <p role="alert" className="mb-4 text-sm text-red-300">{errorMsg}</p>}
+          {errorMsg && status !== 'error' && <p role="alert" className="mb-4 text-sm text-red-700">{errorMsg}</p>}
           {!file && status !== 'analyzing' && status !== 'error' ? (
             <div {...getRootProps()} className={`glass card flex cursor-pointer flex-col items-center py-14 text-center transition-all ${isDragActive ? 'border-fortexa-primary/60 bg-fortexa-primary/10' : 'glass-hover'}`}>
               <input {...getInputProps()} />
@@ -244,7 +244,7 @@ export default function Scanner() {
                     {file && <p className="text-xs text-fortexa-muted">{(file.size / 1024 / 1024).toFixed(1)} MB</p>}
                   </div>
                 </div>
-                {!uploading && <button onClick={reset} aria-label="Remove selected file" className="shrink-0 p-2 text-fortexa-muted hover:text-red-400"><X size={18} /></button>}
+                {!uploading && <button onClick={reset} aria-label="Remove selected file" className="shrink-0 p-2 text-fortexa-muted hover:text-red-700"><X size={18} /></button>}
               </div>
               {preview && (fileType === 'image'
                 ? <img src={preview} alt="Preview" className="max-h-80 w-full rounded-xl object-contain bg-black" />
@@ -255,9 +255,9 @@ export default function Scanner() {
                   <Loader2 size={18} className="animate-spin text-fortexa-primary" />
                   <span className="text-sm text-fortexa-muted">{status === 'uploading' ? 'Uploading…' : 'Analyzing…'}</span>
                 </div>}
-                {status === 'error' && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl bg-red-500/10 p-4">
-                  <AlertCircle size={18} className="shrink-0 text-red-400" />
-                  <span className="min-w-0 flex-1 text-sm text-red-300">{errorMsg}</span>
+                {status === 'error' && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl bg-red-50 p-4">
+                  <AlertCircle size={18} className="shrink-0 text-red-700" />
+                  <span className="min-w-0 flex-1 text-sm text-red-700">{errorMsg}</span>
                   <button onClick={reset} className="btn-secondary !py-1 !px-3">Try again</button>
                 </div>}
               </div>

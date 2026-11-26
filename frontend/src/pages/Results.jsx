@@ -13,9 +13,9 @@ import VideoTimeline from '../components/ui/VideoTimeline'
 import ScanNotes from '../components/ui/ScanNotes'
 
 const signalColors = {
-  suspicious: 'text-red-400',
-  neutral: 'text-amber-400',
-  normal: 'text-emerald-400',
+  suspicious: 'text-red-700',
+  neutral: 'text-amber-800',
+  normal: 'text-emerald-700',
 }
 
 export default function Results() {
@@ -53,7 +53,7 @@ export default function Results() {
   if (error) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
-        <AlertTriangle size={36} className="text-amber-300" />
+        <AlertTriangle size={36} className="text-amber-700" />
         <h1 className="text-2xl font-bold">Report unavailable</h1>
         <p role="alert" className="text-fortexa-muted">{error}</p>
         <div className="flex flex-wrap justify-center gap-3">
@@ -93,7 +93,7 @@ export default function Results() {
   if (scan.status === 'failed') {
     return (
       <div className="flex flex-col items-center py-24">
-        <AlertTriangle size={36} className="text-red-400 mb-4" />
+        <AlertTriangle size={36} className="text-red-700 mb-4" />
         <p className="text-lg font-semibold">Scan Failed</p>
         <p className="mt-1 max-w-md text-center text-sm text-fortexa-muted">{scan.error || 'An unknown error occurred.'}</p>
         <Link to="/" className="btn-primary mt-4">Try Again</Link>
